@@ -1,15 +1,17 @@
+"use client";
+
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
+import { useI18n } from "@/lib/i18n";
 
 export default function CalendarPage() {
+  const { t } = useI18n();
   return (
-    <>
-      <Header title="日程日历" description="月视图查看所有安排" />
-      <div className="flex-1 p-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">日历开发中</p>
-          <p className="text-sm mt-1">月视图展示比赛、训练和其他事件</p>
-        </div>
+    <PageTransition>
+      <Header title={t("calendar.title")} description={t("calendar.desc")} />
+      <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+        <p className="text-lg">{t("calendar.developing")}</p>
       </div>
-    </>
+    </PageTransition>
   );
 }

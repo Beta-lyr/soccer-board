@@ -3,6 +3,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "./status-badge";
+import { useI18n } from "@/lib/i18n";
 import type { Player } from "@/types";
 
 interface PlayerCardProps {
@@ -11,34 +12,26 @@ interface PlayerCardProps {
 }
 
 export function PlayerCard({ player, onClick }: PlayerCardProps) {
-  const avgScore = (
-    Object.values(player.abilities).reduce((a, b) => a + b, 0) / 6
-  ).toFixed(1);
+  const { t } = useI18n();
+  const avgScore = (Object.values(player.abilities).reduce((a, b) => a + b, 0) / 6).toFixed(1);
 
   return (
-    <Card
-      className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
-      onClick={onClick}
-    >
+    <Card className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group" onClick={onClick}>
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
           <Avatar className="h-12 w-12 ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
-            <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
-              {player.number}
-            </AvatarFallback>
+            <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">{player.number}</AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-semibold truncate">{player.name}</span>
               <StatusBadge status={player.status} />
             </div>
-            <div className="text-xs text-muted-foreground mt-0.5">
-              {player.positions.join(" · ")}
-            </div>
+            <div className="text-xs text-muted-foreground mt-0.5">{player.positions.join(" · ")}</div>
           </div>
           <div className="text-right">
             <div className="text-2xl font-black text-primary tabular-nums">{avgScore}</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">综合</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{t("players.overall")}</div>
           </div>
         </div>
       </CardContent>

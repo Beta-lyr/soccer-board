@@ -12,11 +12,13 @@ import { usePlayers } from "@/hooks/use-players";
 import { Plus, Upload, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n";
 
 export default function PlayersPage() {
   const { players, addPlayer } = usePlayers();
   const [showForm, setShowForm] = useState(false);
   const [search, setSearch] = useState("");
+  const { t } = useI18n();
 
   const filtered = players.filter(
     (p) =>
@@ -28,25 +30,24 @@ export default function PlayersPage() {
   return (
     <PageTransition>
       <Header
-        title="球员管理"
-        description={`共 ${players.length} 名球员`}
+        title={t("players.title")}
+        description={t("players.count", { count: players.length })}
         actions={
           <div className="flex gap-2">
             <Link href="/players/import/">
-              <Button variant="outline">
+              <Button variant="outline" size="sm">
                 <Upload className="h-4 w-4 mr-1" />
-                批量导入
+                <span className="hidden sm:inline">{t("players.batchImport")}</span>
               </Button>
             </Link>
-            <Button onClick={() => setShowForm(true)}>
+            <Button size="sm" onClick={() => setShowForm(true)}>
               <Plus className="h-4 w-4 mr-1" />
-              添加球员
+              <span className="hidden sm:inline">{t("players.addPlayer")}</span>
             </Button>
           </div>
         }
       />
-      <div className="flex-1 p-6 space-y-4">
-        {/* 搜索 */}
+      <div className="flex-1 p-4 md:p-6 space-y-4">
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -55,14 +56,13 @@ export default function PlayersPage() {
         >
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="搜索姓名、号码、位置..."
+            placeholder={t("players.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
         </motion.div>
 
-        {/* 球员列表 */}
         {filtered.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
@@ -70,10 +70,10 @@ export default function PlayersPage() {
             className="text-center py-12 text-muted-foreground"
           >
             <p className="text-lg">
-              {players.length === 0 ? "暂无球员数据" : "没有匹配的球员"}
+              {players.length === 0 ? t("players.noPlayers") : t("players.noMatch")}
             </p>
             <p className="text-sm mt-1">
-              {players.length === 0 && "点击「添加球员」开始"}
+              {players.length === 0 && t("players.addPlayer")}
             </p>
           </motion.div>
         ) : (
@@ -84,19 +84,14 @@ export default function PlayersPage() {
               hidden: { opacity: 0 },
               show: { opacity: 1, transition: { staggerChildren: 0.06 } },
             }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
           >
             {filtered.map((player) => (
               <motion.div
                 key={player.id}
                 variants={{
                   hidden: { opacity: 0, y: 16, scale: 0.97 },
-                  show: {
-                    opacity: 1,
-                    y: 0,
-                    scale: 1,
-                    transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] },
-                  },
+                  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4 } },
                 }}
               >
                 <Link href={`/players/detail/?id=${player.id}`}>

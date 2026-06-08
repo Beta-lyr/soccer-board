@@ -1,15 +1,17 @@
+"use client";
+
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
+import { useI18n } from "@/lib/i18n";
 
 export default function StatsPage() {
+  const { t } = useI18n();
   return (
-    <>
-      <Header title="数据统计" description="球员和球队数据分析" />
-      <div className="flex-1 p-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">暂无统计数据</p>
-          <p className="text-sm mt-1">添加球员和比赛记录后自动生成</p>
-        </div>
+    <PageTransition>
+      <Header title={t("stats.title")} description={t("stats.desc")} />
+      <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+        <p className="text-lg">{t("stats.noStats")}</p>
       </div>
-    </>
+    </PageTransition>
   );
 }

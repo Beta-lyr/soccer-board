@@ -9,38 +9,39 @@ import { HoverCard } from "@/components/ui/hover-card";
 import { Trophy, Users, Swords, Calendar, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-
-const STATS = [
-  { label: "球员总数", value: 0, icon: Users, accent: "bg-blue-500/10 text-blue-500" },
-  { label: "战术方案", value: 0, icon: Swords, accent: "bg-emerald-500/10 text-emerald-500" },
-  { label: "比赛场次", value: 0, icon: Trophy, accent: "bg-amber-500/10 text-amber-500" },
-  { label: "训练次数", value: 0, icon: Calendar, accent: "bg-purple-500/10 text-purple-500" },
-];
-
-const QUICK_LINKS = [
-  { label: "新建战术", href: "/tactics/new/", emoji: "📝", desc: "创建阵型与路线" },
-  { label: "添加球员", href: "/players/", emoji: "👤", desc: "管理球员档案" },
-  { label: "新建比赛", href: "/matches/new/", emoji: "⚽", desc: "记录比赛事件" },
-  { label: "训练日程", href: "/training/", emoji: "🏃", desc: "安排训练出勤" },
-];
+import { useI18n } from "@/lib/i18n";
 
 export default function DashboardPage() {
+  const { t } = useI18n();
+
+  const STATS = [
+    { label: t("dashboard.totalPlayers"), value: 0, icon: Users, accent: "bg-blue-500/10 text-blue-500" },
+    { label: t("dashboard.totalTactics"), value: 0, icon: Swords, accent: "bg-violet-500/10 text-violet-500" },
+    { label: t("dashboard.totalMatches"), value: 0, icon: Trophy, accent: "bg-amber-500/10 text-amber-500" },
+    { label: t("dashboard.totalTrainings"), value: 0, icon: Calendar, accent: "bg-rose-500/10 text-rose-500" },
+  ];
+
+  const QUICK_LINKS = [
+    { label: t("dashboard.newTactic"), href: "/tactics/new/", emoji: "📝", desc: t("dashboard.newTacticDesc") },
+    { label: t("dashboard.addPlayer"), href: "/players/", emoji: "👤", desc: t("dashboard.addPlayerDesc") },
+    { label: t("dashboard.newMatch"), href: "/matches/new/", emoji: "⚽", desc: t("dashboard.newMatchDesc") },
+    { label: t("dashboard.trainingSchedule"), href: "/training/", emoji: "🏃", desc: t("dashboard.trainingScheduleDesc") },
+  ];
+
   return (
     <PageTransition>
-      <Header title="首页" description="球队管理看板" />
-      <div className="flex-1 p-6 space-y-6">
+      <Header title={t("common.dashboard")} />
+      <div className="flex-1 p-4 md:p-6 space-y-6">
         {/* 欢迎横幅 */}
         <motion.div
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/90 to-primary p-6 text-primary-foreground"
+          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary/90 to-primary p-5 md:p-6 text-primary-foreground"
         >
           <div className="relative z-10">
-            <h2 className="text-xl font-bold">欢迎使用 Soccer Board</h2>
-            <p className="text-sm mt-1 opacity-80">
-              管理你的球队 — 战术、球员、比赛、训练一站搞定
-            </p>
+            <h2 className="text-lg md:text-xl font-bold">{t("dashboard.welcome")}</h2>
+            <p className="text-sm mt-1 opacity-80">{t("dashboard.welcomeDesc")}</p>
           </div>
           <motion.div
             initial={{ x: 20, opacity: 0 }}
@@ -53,22 +54,22 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* 统计卡片 */}
-        <StaggerList className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StaggerList className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {STATS.map((stat) => (
             <HoverCard key={stat.label}>
               <Card className="relative overflow-hidden">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <CardTitle className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {stat.label}
                   </CardTitle>
                   <div className={`p-1.5 rounded-lg ${stat.accent}`}>
-                    <stat.icon className="h-4 w-4" />
+                    <stat.icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
                   </div>
                 </CardHeader>
                 <CardContent>
                   <AnimatedCounter
                     value={stat.value}
-                    className="text-3xl font-bold tracking-tight"
+                    className="text-2xl md:text-3xl font-bold tracking-tight"
                   />
                 </CardContent>
               </Card>
@@ -76,7 +77,7 @@ export default function DashboardPage() {
           ))}
         </StaggerList>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* 近期赛程 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -87,13 +88,13 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider">
-                  近期赛程
+                  {t("dashboard.upcomingMatches")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-center py-8 text-muted-foreground">
                   <Calendar className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p className="text-sm">暂无赛程安排</p>
+                  <p className="text-sm">{t("dashboard.noMatches")}</p>
                 </div>
               </CardContent>
             </Card>
@@ -108,7 +109,7 @@ export default function DashboardPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm font-semibold uppercase tracking-wider">
-                  快速入口
+                  {t("dashboard.quickActions")}
                 </CardTitle>
               </CardHeader>
               <CardContent>

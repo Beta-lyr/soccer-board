@@ -1,15 +1,17 @@
+"use client";
+
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
+import { useI18n } from "@/lib/i18n";
 
 export default function LineupPage() {
+  const { t } = useI18n();
   return (
-    <>
-      <Header title="阵容管理" description="设置首发阵容和替补" />
-      <div className="flex-1 p-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">阵容管理开发中</p>
-          <p className="text-sm mt-1">支持拖拽设置首发 11 人和替补排序</p>
-        </div>
+    <PageTransition>
+      <Header title={t("lineup.title")} description={t("lineup.desc")} />
+      <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+        <p className="text-lg">{t("lineup.developing")}</p>
       </div>
-    </>
+    </PageTransition>
   );
 }

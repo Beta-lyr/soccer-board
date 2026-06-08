@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import * as fabric from "fabric";
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,15 +21,10 @@ import { FORMATIONS, type TacticType } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
-
-const TACTIC_TYPES: { value: TacticType; label: string }[] = [
-  { value: "open_play", label: "进攻战术" },
-  { value: "corner", label: "角球" },
-  { value: "free_kick", label: "任意球" },
-  { value: "throw_in", label: "界外球" },
-];
+import { useI18n } from "@/lib/i18n";
 
 export default function NewTacticPage() {
+  const { t } = useI18n();
   const [name, setName] = useState("");
   const [tacticType, setTacticType] = useState<TacticType>("open_play");
   const [formation, setFormation] = useState("4-4-2");
@@ -38,6 +34,13 @@ export default function NewTacticPage() {
   const drawStartRef = useRef<{ x: number; y: number } | null>(null);
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
+
+  const TACTIC_TYPES: { value: TacticType; key: string }[] = [
+    { value: "open_play", key: "tactics.openPlay" },
+    { value: "corner", key: "tactics.corner" },
+    { value: "free_kick", key: "tactics.freeKick" },
+    { value: "throw_in", key: "tactics.throwIn" },
+  ];
 
   const saveToHistory = useCallback(() => {
     if (!canvasRef.current) return;
@@ -64,67 +67,38 @@ export default function NewTacticPage() {
       const start = drawStartRef.current;
 
       if (drawMode === "run") {
-        // 虚线曲线 (跑位)
         const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#ffffff",
-          strokeWidth: 3,
-          strokeDashArray: [8, 4],
-          selectable: true,
-          evented: true,
+          stroke: "#ffffff", strokeWidth: 3, strokeDashArray: [8, 4],
+          selectable: true, evented: true,
         });
         path.set("data", { type: "drawing" });
         canvas.add(path);
       } else if (drawMode === "pass") {
-        // 实线箭头 (传球)
         const line = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#ffcc00",
-          strokeWidth: 3,
-          selectable: true,
-          evented: true,
+          stroke: "#facc15", strokeWidth: 3, selectable: true, evented: true,
         });
         line.set("data", { type: "drawing" });
         canvas.add(line);
-
-        // 箭头
         const angle = Math.atan2(pointer.y - start.y, pointer.x - start.x);
-        const arrowSize = 12;
         const arrow = new fabric.Triangle({
-          left: pointer.x,
-          top: pointer.y,
-          width: arrowSize,
-          height: arrowSize,
-          fill: "#ffcc00",
-          angle: (angle * 180) / Math.PI + 90,
-          originX: "center",
-          originY: "center",
-          selectable: false,
-          evented: false,
+          left: pointer.x, top: pointer.y, width: 12, height: 12,
+          fill: "#facc15", angle: (angle * 180) / Math.PI + 90,
+          originX: "center", originY: "center", selectable: false, evented: false,
         });
         arrow.set("data", { type: "drawing" });
         canvas.add(arrow);
       } else if (drawMode === "dribble") {
-        // 带球路线 (粗实线)
         const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#00ccff",
-          strokeWidth: 4,
-          selectable: true,
-          evented: true,
+          stroke: "#38bdf8", strokeWidth: 4, selectable: true, evented: true,
         });
         path.set("data", { type: "drawing" });
         canvas.add(path);
       } else if (drawMode === "defend") {
-        // 防守区域 (半透明矩形)
-        const left = Math.min(start.x, pointer.x);
-        const top = Math.min(start.y, pointer.y);
-        const width = Math.abs(pointer.x - start.x);
-        const height = Math.abs(pointer.y - start.y);
         const rect = new fabric.Rect({
-          left, top, width, height,
-          fill: "rgba(255, 0, 0, 0.15)",
-          stroke: "rgba(255, 0, 0, 0.5)",
-          strokeWidth: 1,
-          selectable: true,
-          evented: true,
+          left: Math.min(start.x, pointer.x), top: Math.min(start.y, pointer.y),
+          width: Math.abs(pointer.x - start.x), height: Math.abs(pointer.y - start.y),
+          fill: "rgba(239, 68, 68, 0.15)", stroke: "rgba(239, 68, 68, 0.5)",
+          strokeWidth: 1, selectable: true, evented: true,
         });
         rect.set("data", { type: "drawing" });
         canvas.add(rect);
@@ -136,7 +110,6 @@ export default function NewTacticPage() {
     });
   }, [drawMode, isDrawing, saveToHistory]);
 
-  // 更新 canvas 的 drawing mode
   const updateCanvasMode = useCallback((mode: DrawMode) => {
     setDrawMode(mode);
     if (!canvasRef.current) return;
@@ -158,131 +131,92 @@ export default function NewTacticPage() {
   const handleUndo = () => {
     if (historyIndexRef.current <= 0 || !canvasRef.current) return;
     historyIndexRef.current--;
-    const json = historyRef.current[historyIndexRef.current];
-    canvasRef.current.loadFromJSON(json).then(() => canvasRef.current?.renderAll());
+    canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
   };
 
   const handleRedo = () => {
     if (historyIndexRef.current >= historyRef.current.length - 1 || !canvasRef.current) return;
     historyIndexRef.current++;
-    const json = historyRef.current[historyIndexRef.current];
-    canvasRef.current.loadFromJSON(json).then(() => canvasRef.current?.renderAll());
+    canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
   };
 
   const handleClear = () => {
     if (!canvasRef.current) return;
-    const canvas = canvasRef.current;
-    const toRemove = canvas.getObjects().filter((obj) => {
-      const data = (obj as fabric.FabricObject).get("data");
-      return data?.type === "drawing";
-    });
-    toRemove.forEach((obj) => canvas.remove(obj));
-    canvas.renderAll();
+    canvasRef.current.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing").forEach((obj) => canvasRef.current!.remove(obj));
+    canvasRef.current.renderAll();
     saveToHistory();
   };
 
   const handleExport = () => {
     if (!canvasRef.current) return;
-    const dataUrl = canvasRef.current.toDataURL({ format: "png", multiplier: 2 });
     const link = document.createElement("a");
-    link.download = `战术_${name || "未命名"}.png`;
-    link.href = dataUrl;
+    link.download = `tactic_${name || "untitled"}.png`;
+    link.href = canvasRef.current.toDataURL({ format: "png", multiplier: 2 });
     link.click();
   };
 
   const handleSave = async () => {
     if (!canvasRef.current || !name) return;
     const canvas = canvasRef.current;
-    const positions = canvas.getObjects().filter((obj) => {
-      const data = (obj as fabric.FabricObject).get("data");
-      return data?.type === "player";
-    }).map((obj) => {
-      const data = (obj as fabric.FabricObject).get("data");
-      return {
-        playerId: "",
-        x: ((obj.left ?? 0) / 600) * 100,
-        y: ((obj.top ?? 0) / 750) * 100,
-        label: data?.position,
-      };
-    });
-
-    const thumbnail = canvas.toDataURL({ format: "png", multiplier: 0.5 });
-
+    const positions = canvas.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "player").map((obj) => ({
+      playerId: "", x: ((obj.left ?? 0) / 600) * 100, y: ((obj.top ?? 0) / 750) * 100,
+      label: (obj as fabric.FabricObject).get("data")?.position,
+    }));
     await db.tactics.add({
-      id: crypto.randomUUID(),
-      name,
-      type: tacticType,
-      formation,
-      players: positions,
-      drawings: canvas.toObject(),
-      thumbnail,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      id: crypto.randomUUID(), name, type: tacticType, formation,
+      players: positions, drawings: canvas.toObject(),
+      thumbnail: canvas.toDataURL({ format: "png", multiplier: 0.5 }),
+      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
     });
-
-    alert("战术已保存！");
+    alert(t("tactics.saved"));
   };
 
   return (
-    <>
+    <PageTransition>
       <Header
-        title="新建战术"
+        title={t("tactics.newTactic")}
         actions={
           <Link href="/tactics/">
-            <Button variant="outline">
+            <Button variant="outline" size="sm">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              返回
+              {t("common.back")}
             </Button>
           </Link>
         }
       />
-      <div className="flex-1 p-6">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* 左侧：设置 */}
+      <div className="flex-1 p-4 md:p-6">
+        <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
+          {/* 左侧设置 */}
           <div className="w-full lg:w-64 space-y-4">
             <div className="space-y-2">
-              <Label>战术名称</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="输入战术名称"
-              />
+              <Label>{t("tactics.tacticName")}</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("tactics.tacticNamePlaceholder")} />
             </div>
-
             <div className="space-y-2">
-              <Label>战术类型</Label>
+              <Label>{t("tactics.tacticType")}</Label>
               <Select value={tacticType} onValueChange={(v) => v && setTacticType(v as TacticType)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TACTIC_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                  ))}
+                  {TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label>阵型</Label>
-              <FormationPicker
-                value={formation}
-                onChange={setFormation}
-              />
+              <Label>{t("tactics.formation")}</Label>
+              <FormationPicker value={formation} onChange={setFormation} />
             </div>
-
-            <div className="p-3 bg-muted rounded-lg text-sm space-y-1">
-              <p className="font-medium">操作提示</p>
-              <p className="text-muted-foreground">• 拖拽模式：拖动球员位置</p>
-              <p className="text-muted-foreground">• 跑位：虚线表示跑位路线</p>
-              <p className="text-muted-foreground">• 传球：黄色箭头表示传球</p>
-              <p className="text-muted-foreground">• 带球：蓝色实线表示带球</p>
-              <p className="text-muted-foreground">• 防守：红色半透明区域</p>
+            <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
+              <p className="font-medium text-sm">{t("tactics.tips")}</p>
+              <p className="text-muted-foreground">• {t("tactics.tipMove")}</p>
+              <p className="text-muted-foreground">• {t("tactics.tipRun")}</p>
+              <p className="text-muted-foreground">• {t("tactics.tipPass")}</p>
+              <p className="text-muted-foreground">• {t("tactics.tipDribble")}</p>
+              <p className="text-muted-foreground">• {t("tactics.tipDefend")}</p>
             </div>
           </div>
 
-          {/* 右侧：画板 */}
-          <div className="flex-1 space-y-3">
+          {/* 右侧画板 */}
+          <div className="flex-1 space-y-3 overflow-x-auto">
             <DrawingTools
               mode={drawMode}
               onModeChange={updateCanvasMode}
@@ -292,13 +226,12 @@ export default function NewTacticPage() {
               onExport={handleExport}
               onSave={handleSave}
             />
-            <Pitch
-              formation={FORMATIONS[formation]}
-              onCanvasReady={handleCanvasReady}
-            />
+            <div className="flex justify-center">
+              <Pitch formation={FORMATIONS[formation]} onCanvasReady={handleCanvasReady} />
+            </div>
           </div>
         </div>
       </div>
-    </>
+    </PageTransition>
   );
 }

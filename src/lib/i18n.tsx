@@ -1,0 +1,70 @@
+"use client";
+
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
+import zh from "@/locales/zh.json";
+import en from "@/locales/en.json";
+
+type Locale = "zh" | "en";
+
+const LOCALES: Record<Locale, typeof zh> = { zh, en };
+
+interface I18nContextValue {
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+}
+
+const I18nContext = createContext<I18nContextValue | null>(null);
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocaleState] = useState<Locale>("zh");
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("locale") as Locale | null;
+    if (saved && (saved === "zh" || saved === "en")) {
+      setLocaleState(saved);
+    }
+    setMounted(true);
+  }, []);
+
+  const setLocale = useCallback((l: Locale) => {
+    setLocaleState(l);
+    localStorage.setItem("locale", l);
+  }, []);
+
+  const t = useCallback(
+    (key: string, params?: Record<string, string | number>): string => {
+      const keys = key.split(".");
+      let value: unknown = LOCALES[locale];
+      for (const k of keys) {
+        if (value && typeof value === "object" && k in value) {
+          value = (value as Record<string, unknown>)[k];
+        } else {
+          return key;
+        }
+      }
+      if (typeof value !== "string") return key;
+      if (!params) return value;
+      return Object.entries(params).reduce(
+        (str, [k, v]) => str.replace(`{${k}}`, String(v)),
+        value
+      );
+    },
+    [locale]
+  );
+
+  if (!mounted) return null;
+
+  return (
+    <I18nContext.Provider value={{ locale, setLocale, t }}>
+      {children}
+    </I18nContext.Provider>
+  );
+}
+
+export function useI18n() {
+  const ctx = useContext(I18nContext);
+  if (!ctx) throw new Error("useI18n must be used within I18nProvider");
+  return ctx;
+}

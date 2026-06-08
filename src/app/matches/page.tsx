@@ -1,29 +1,31 @@
+"use client";
+
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import Link from "next/link";
 
 export default function MatchesPage() {
+  const { t } = useI18n();
   return (
-    <>
+    <PageTransition>
       <Header
-        title="比赛管理"
-        description="赛程记录和比赛事件"
+        title={t("matches.title")}
+        description={t("matches.desc")}
         actions={
           <Link href="/matches/new/">
-            <Button>
+            <Button size="sm">
               <Plus className="h-4 w-4 mr-1" />
-              新建比赛
+              {t("matches.newMatch")}
             </Button>
           </Link>
         }
       />
-      <div className="flex-1 p-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">暂无比赛记录</p>
-          <p className="text-sm mt-1">点击「新建比赛」开始记录</p>
-        </div>
+      <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+        <p className="text-lg">{t("matches.noMatches")}</p>
       </div>
-    </>
+    </PageTransition>
   );
 }

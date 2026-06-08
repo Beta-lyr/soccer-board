@@ -1,26 +1,28 @@
+"use client";
+
 import { Header } from "@/components/layout/header";
+import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 
 export default function TrainingPage() {
+  const { t } = useI18n();
   return (
-    <>
+    <PageTransition>
       <Header
-        title="训练管理"
-        description="训练日程和出勤记录"
+        title={t("training.title")}
+        description={t("training.desc")}
         actions={
-          <Button>
+          <Button size="sm">
             <Plus className="h-4 w-4 mr-1" />
-            新建训练
+            {t("training.newTraining")}
           </Button>
         }
       />
-      <div className="flex-1 p-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <p className="text-lg">暂无训练安排</p>
-          <p className="text-sm mt-1">点击「新建训练」添加日程</p>
-        </div>
+      <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+        <p className="text-lg">{t("training.noTraining")}</p>
       </div>
-    </>
+    </PageTransition>
   );
 }
