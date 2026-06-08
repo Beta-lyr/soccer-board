@@ -13,6 +13,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./theme-toggle";
 
 const NAV_ITEMS = [
   { href: "/", label: "首页", icon: LayoutDashboard },
@@ -29,14 +30,24 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 z-40 h-screen w-56 border-r bg-sidebar text-sidebar-foreground flex flex-col">
-      <div className="flex h-14 items-center gap-2 border-b px-4">
-        <span className="text-xl">⚽</span>
-        <span className="font-bold text-lg">足球队管理</span>
+    <aside className="fixed left-0 top-0 z-40 h-screen w-56 flex flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+      {/* Logo */}
+      <div className="flex h-14 items-center gap-2.5 border-b border-sidebar-border px-4">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground text-sm">
+          ⚽
+        </div>
+        <div>
+          <span className="font-bold text-sm tracking-tight">SOCCER</span>
+          <span className="font-bold text-sm tracking-tight text-sidebar-primary"> BOARD</span>
+        </div>
       </div>
 
+      {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-4">
-        <ul className="space-y-1">
+        <p className="px-3 mb-2 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40">
+          功能模块
+        </p>
+        <ul className="space-y-0.5">
           {NAV_ITEMS.map((item) => {
             const isActive =
               item.href === "/"
@@ -47,13 +58,20 @@ export function Sidebar() {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all",
                     isActive
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                      : "text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground/90"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <item.icon
+                    className={cn(
+                      "h-4 w-4 transition-colors",
+                      isActive
+                        ? "text-sidebar-primary"
+                        : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/70"
+                    )}
+                  />
                   {item.label}
                 </Link>
               </li>
@@ -62,10 +80,12 @@ export function Sidebar() {
         </ul>
       </nav>
 
-      <div className="border-t p-4">
-        <p className="text-xs text-muted-foreground text-center">
-          Soccer Board v1.0
+      {/* Footer */}
+      <div className="border-t border-sidebar-border p-3 flex items-center justify-between">
+        <p className="text-[10px] text-sidebar-foreground/30 uppercase tracking-wider">
+          v1.0
         </p>
+        <ThemeToggle />
       </div>
     </aside>
   );

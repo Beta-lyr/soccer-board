@@ -17,13 +17,13 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow"
+      className="cursor-pointer hover:shadow-md hover:border-primary/30 transition-all group"
       onClick={onClick}
     >
       <CardContent className="p-4">
         <div className="flex items-center gap-3">
-          <Avatar className="h-12 w-12">
-            <AvatarFallback className="text-lg font-bold bg-primary text-primary-foreground">
+          <Avatar className="h-12 w-12 ring-2 ring-primary/10 group-hover:ring-primary/30 transition-all">
+            <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
               {player.number}
             </AvatarFallback>
           </Avatar>
@@ -32,13 +32,13 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
               <span className="font-semibold truncate">{player.name}</span>
               <StatusBadge status={player.status} />
             </div>
-            <div className="text-sm text-muted-foreground mt-0.5">
-              {player.positions.join(", ")}
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {player.positions.join(" · ")}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-primary">{avgScore}</div>
-            <div className="text-xs text-muted-foreground">综合</div>
+            <div className="text-2xl font-black text-primary tabular-nums">{avgScore}</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">综合</div>
           </div>
         </div>
       </CardContent>
