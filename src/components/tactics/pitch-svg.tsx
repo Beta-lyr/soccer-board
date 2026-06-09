@@ -1,12 +1,15 @@
 "use client";
 
+import type { FormationPosition } from "@/types";
+
 interface PitchSvgProps {
   width?: number;
   height?: number;
   className?: string;
+  positions?: FormationPosition[];
 }
 
-export function PitchSvg({ width = 600, height = 750, className }: PitchSvgProps) {
+export function PitchSvg({ width = 600, height = 750, className, positions }: PitchSvgProps) {
   const m = 30;
   const w = width;
   const h = height;
@@ -37,10 +40,8 @@ export function PitchSvg({ width = 600, height = 750, className }: PitchSvgProps
       {Array.from({ length: 12 }).map((_, i) => (
         <rect
           key={i}
-          x="0"
-          y={i * (h / 12)}
-          width={w}
-          height={h / 24}
+          x="0" y={i * (h / 12)}
+          width={w} height={h / 24}
           fill={i % 2 === 0 ? "rgba(255,255,255,0.03)" : "transparent"}
         />
       ))}
@@ -72,6 +73,34 @@ export function PitchSvg({ width = 600, height = 750, className }: PitchSvgProps
       <path d={describeArc(w - m, m, cornerR, 90, 180)} fill="none" stroke="white" strokeWidth={lw} />
       <path d={describeArc(m, h - m, cornerR, 270, 360)} fill="none" stroke="white" strokeWidth={lw} />
       <path d={describeArc(w - m, h - m, cornerR, 180, 270)} fill="none" stroke="white" strokeWidth={lw} />
+
+      {/* 球员位置标记 */}
+      {positions?.map((pos, i) => {
+        const x = (pos.x / 100) * w;
+        const y = (pos.y / 100) * h;
+        return (
+          <g key={`${pos.position}-${i}`}>
+            <circle
+              cx={x} cy={y} r={20}
+              fill="rgba(255,255,255,0.92)"
+              stroke="rgba(0,0,0,0.5)"
+              strokeWidth={2}
+              filter="drop-shadow(0 2px 4px rgba(0,0,0,0.3))"
+            />
+            <text
+              x={x} y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={12}
+              fontWeight="bold"
+              fill="#1a1a1a"
+              fontFamily="sans-serif"
+            >
+              {pos.position}
+            </text>
+          </g>
+        );
+      })}
     </svg>
   );
 }

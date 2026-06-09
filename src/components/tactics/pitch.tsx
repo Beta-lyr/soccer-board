@@ -5,8 +5,6 @@ import * as fabric from "fabric";
 import { PitchSvg } from "./pitch-svg";
 import type { FormationPosition } from "@/types";
 
-const PLAYER_RADIUS = 20;
-
 interface PitchProps {
   formation: FormationPosition[];
   onCanvasReady?: (canvas: fabric.Canvas) => void;
@@ -25,53 +23,6 @@ export function Pitch({
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const [ready, setReady] = useState(false);
 
-  const addPlayers = useCallback(
-    (canvas: fabric.Canvas, positions: FormationPosition[]) => {
-      positions.forEach((pos, i) => {
-        const x = (pos.x / 100) * width;
-        const y = (pos.y / 100) * height;
-
-        // 白色圆圈
-        const circle = new fabric.Circle({
-          radius: PLAYER_RADIUS,
-          fill: "rgba(255,255,255,0.95)",
-          stroke: "rgba(0,0,0,0.6)",
-          strokeWidth: 2,
-          originX: "center",
-          originY: "center",
-          shadow: new fabric.Shadow({
-            color: "rgba(0,0,0,0.4)",
-            blur: 6,
-            offsetY: 2,
-          }),
-        });
-
-        // 位置文字（黑色，加粗）
-        const text = new fabric.Text(pos.position, {
-          fontSize: 12,
-          fontWeight: "bold",
-          fill: "#1a1a1a",
-          originX: "center",
-          originY: "center",
-          fontFamily: "sans-serif",
-        });
-
-        const group = new fabric.Group([circle, text], {
-          left: x,
-          top: y,
-          originX: "center",
-          originY: "center",
-          hasControls: false,
-          hasBorders: false,
-        });
-
-        group.set("data", { type: "player", index: i, position: pos.position });
-        canvas.add(group);
-      });
-    },
-    [width, height]
-  );
-
   useEffect(() => {
     if (!canvasRef.current || !containerRef.current) return;
 
@@ -80,18 +31,20 @@ export function Pitch({
       height,
       selection: false,
       transparentCorners: false,
+      backgroundColor: "transparent",
     });
 
-    // canvas 浮在 SVG 上层，透明背景
-    const canvasEl = containerRef.current.querySelector("canvas");
-    if (canvasEl) {
-      canvasEl.style.position = "absolute";
-      canvasEl.style.top = "0";
-      canvasEl.style.left = "0";
-    }
+    // 确保 canvas 在 SVG 上层
+    const wrapper = containerRef.current;
+    const canvasEls = wrapper.querySelectorAll("canvas");
+    canvasEls.forEach((el) => {
+      el.style.position = "absolute";
+      el.style.top = "0";
+      el.style.left = "0";
+      el.style.pointerEvents = "auto";
+    });
 
     fabricRef.current = canvas;
-    addPlayers(canvas, formation);
     setReady(true);
     onCanvasReady?.(canvas);
 
@@ -101,18 +54,35 @@ export function Pitch({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 阵型变化时更新球员位置
+  // 阵型变化时更新可拖拽的球员标记（SVG 已显示位置标签）
   useEffect(() => {
     if (!ready || !fabricRef.current) return;
     const canvas = fabricRef.current;
+    // 清除旧的可拖拽球员
     const toRemove = canvas.getObjects().filter((obj) => {
       const data = (obj as fabric.FabricObject).get("data");
       return data?.type === "player";
     });
     toRemove.forEach((obj) => canvas.remove(obj));
-    addPlayers(canvas, formation);
+    // 添加可拖拽的透明标记（用于拖拽交互）
+    formation.forEach((pos, i) => {
+      const x = (pos.x / 100) * width;
+      const y = (pos.y / 100) * height;
+      const marker = new fabric.Circle({
+        radius: 20,
+        fill: "transparent",
+        stroke: "transparent",
+        originX: "center",
+        originY: "center",
+        hasControls: false,
+        hasBorders: false,
+      });
+      marker.set({ left: x, top: y });
+      marker.set("data", { type: "player", index: i, position: pos.position });
+      canvas.add(marker);
+    });
     canvas.renderAll();
-  }, [formation, ready, addPlayers]);
+  }, [formation, ready, width, height]);
 
   return (
     <div
@@ -120,7 +90,7 @@ export function Pitch({
       className="relative inline-block rounded-xl overflow-hidden shadow-lg border-2 border-white/10"
       style={{ width, height }}
     >
-      <PitchSvg width={width} height={height} />
+      <PitchSvg width={width} height={height} positions={formation} />
       <canvas ref={canvasRef} />
     </div>
   );

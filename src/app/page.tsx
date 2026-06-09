@@ -10,15 +10,22 @@ import { Trophy, Users, Swords, Calendar, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { useLiveQuery } from "dexie-react-hooks";
+import { db } from "@/lib/db";
 
 export default function DashboardPage() {
   const { t } = useI18n();
 
+  const playerCount = useLiveQuery(() => db.players.count()) ?? 0;
+  const tacticCount = useLiveQuery(() => db.tactics.count()) ?? 0;
+  const matchCount = useLiveQuery(() => db.matches.count()) ?? 0;
+  const trainingCount = useLiveQuery(() => db.trainings.count()) ?? 0;
+
   const STATS = [
-    { label: t("dashboard.totalPlayers"), value: 0, icon: Users, accent: "bg-blue-500/10 text-blue-500" },
-    { label: t("dashboard.totalTactics"), value: 0, icon: Swords, accent: "bg-violet-500/10 text-violet-500" },
-    { label: t("dashboard.totalMatches"), value: 0, icon: Trophy, accent: "bg-amber-500/10 text-amber-500" },
-    { label: t("dashboard.totalTrainings"), value: 0, icon: Calendar, accent: "bg-rose-500/10 text-rose-500" },
+    { label: t("dashboard.totalPlayers"), value: playerCount, icon: Users, accent: "bg-blue-500/10 text-blue-500" },
+    { label: t("dashboard.totalTactics"), value: tacticCount, icon: Swords, accent: "bg-violet-500/10 text-violet-500" },
+    { label: t("dashboard.totalMatches"), value: matchCount, icon: Trophy, accent: "bg-amber-500/10 text-amber-500" },
+    { label: t("dashboard.totalTrainings"), value: trainingCount, icon: Calendar, accent: "bg-rose-500/10 text-rose-500" },
   ];
 
   const QUICK_LINKS = [
@@ -43,21 +50,16 @@ export default function DashboardPage() {
             <h2 className="text-lg md:text-xl font-bold">{t("dashboard.welcome")}</h2>
             <p className="text-sm mt-1 opacity-80">{t("dashboard.welcomeDesc")}</p>
           </div>
-          <motion.div
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 0.1 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-7xl select-none"
-          >
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-7xl select-none opacity-10">
             ⚽
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* 统计卡片 */}
         <StaggerList className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
           {STATS.map((stat) => (
             <HoverCard key={stat.label}>
-              <Card className="relative overflow-hidden">
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {stat.label}

@@ -80,8 +80,9 @@ export function DrawingTools({
       <Button variant="ghost" size="sm" onClick={onExport} title={t("tactics.exportPng")}>
         <Download className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onSave} title={t("common.save")}>
-        <Save className="h-4 w-4" />
+      <Button variant="default" size="sm" onClick={onSave} title={t("common.save")}>
+        <Save className="h-4 w-4 mr-1" />
+        <span className="text-xs">{t("common.save")}</span>
       </Button>
     </div>
   );

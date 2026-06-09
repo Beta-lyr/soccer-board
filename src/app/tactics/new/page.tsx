@@ -18,7 +18,7 @@ import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools, type DrawMode } from "@/components/tactics/drawing-tools";
 import { FORMATIONS, FORMATION_LIST, type TacticType } from "@/types";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
@@ -167,7 +167,11 @@ export default function NewTacticPage() {
   };
 
   const handleSave = async () => {
-    if (!canvasRef.current || !name) return;
+    if (!name) {
+      alert("请先输入战术名称");
+      return;
+    }
+    if (!canvasRef.current) return;
     try {
       const canvas = canvasRef.current;
       const positions = canvas.getObjects()
@@ -234,6 +238,11 @@ export default function NewTacticPage() {
               <p className="text-muted-foreground">• {t("tactics.tipDribble")}</p>
               <p className="text-muted-foreground">• {t("tactics.tipDefend")}</p>
             </div>
+
+            <Button className="w-full" onClick={handleSave} disabled={!name}>
+              <Save className="h-4 w-4 mr-2" />
+              {t("common.save")}
+            </Button>
           </div>
 
           {/* 右侧画板 */}
