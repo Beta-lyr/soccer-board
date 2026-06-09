@@ -129,13 +129,13 @@ export default function LineupPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-1.5">
-                {formationPositions.map((fp) => {
+                {formationPositions.map((fp, idx) => {
                   const playerId = starters.get(fp.position);
                   const player = playerId ? players.find((p) => p.id === playerId) : null;
                   const isSelected = selectedPos === fp.position;
                   return (
                     <div
-                      key={fp.position}
+                      key={`${fp.position}-${idx}`}
                       onClick={() => handlePositionClick(fp.position)}
                       className={`flex items-center gap-2 p-2 rounded-md cursor-pointer text-sm transition-colors ${
                         isSelected
@@ -239,7 +239,7 @@ export default function LineupPage() {
               <PitchSvg width={PITCH_W} height={PITCH_H} />
 
               {/* 球员标记 */}
-              {formationPositions.map((fp) => {
+              {formationPositions.map((fp, idx) => {
                 const playerId = starters.get(fp.position);
                 const player = playerId ? players.find((p) => p.id === playerId) : null;
                 const x = (fp.x / 100) * PITCH_W;
@@ -248,7 +248,7 @@ export default function LineupPage() {
 
                 return (
                   <motion.div
-                    key={fp.position}
+                    key={`${fp.position}-pitch-${idx}`}
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}

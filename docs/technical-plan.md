@@ -278,33 +278,15 @@ const nextConfig = {
 - 每个 PR 自动生成预览 URL
 - 部署到 Cloudflare 全球 CDN，自动 HTTPS
 
-### 7.3 方式二：Wrangler CLI 手动部署
 
-```bash
-# 1. 安装 Wrangler
-npm install -g wrangler
 
-# 2. 登录 Cloudflare
-wrangler login
-
-# 3. 构建
-npm run build
-
-# 4. 部署
-npx wrangler pages deploy out --project-name=soccer-board
-```
-
-### 7.4 自定义域名
+### 7.3 自定义域名
 
 1. Cloudflare Dashboard → Pages → 项目 → **Custom domains**
 2. 添加域名（如 `soccer.yourdomain.com`）
 3. 域名在 Cloudflare：自动配置 DNS
 4. 域名在其他注册商：添加 CNAME 记录指向 `<project>.pages.dev`
 5. SSL 自动签发
-
-### 7.5 部署后验证
-
-部署成功后访问 `https://<project>.pages.dev`，应看到首页 Dashboard。
 
 ---
 
