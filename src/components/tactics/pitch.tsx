@@ -22,10 +22,15 @@ export function Pitch({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const [ready, setReady] = useState(false);
+  const readyRef = useRef(false);
 
   useEffect(() => {
-    if (!canvasRef.current || !containerRef.current) return;
+    if (!canvasRef.current || !containerRef.current) {
+      console.log("[Pitch] canvas or container ref is null");
+      return;
+    }
 
+    console.log("[Pitch] Creating fabric.Canvas...");
     const canvas = new fabric.Canvas(canvasRef.current, {
       width,
       height,
@@ -34,37 +39,48 @@ export function Pitch({
       backgroundColor: "transparent",
     });
 
-    // 确保 canvas 在 SVG 上层
-    const wrapper = containerRef.current;
-    const canvasEls = wrapper.querySelectorAll("canvas");
-    canvasEls.forEach((el) => {
-      el.style.position = "absolute";
-      el.style.top = "0";
-      el.style.left = "0";
-      el.style.pointerEvents = "auto";
-    });
+    // Fabric.js 创建后会生成 wrapper div，需要让整个 wrapper 浮在 SVG 上
+    const container = containerRef.current;
+    // fabric.js 会把原始 canvas 包在一个 div 里
+    const wrapperDiv = container.querySelector(".canvas-container") as HTMLElement;
+    if (wrapperDiv) {
+      console.log("[Pitch] Found fabric canvas-container, setting styles");
+      wrapperDiv.style.position = "absolute";
+      wrapperDiv.style.top = "0";
+      wrapperDiv.style.left = "0";
+      wrapperDiv.style.zIndex = "10";
+    } else {
+      console.log("[Pitch] No .canvas-container found, setting canvas styles directly");
+      const canvasEls = container.querySelectorAll("canvas");
+      canvasEls.forEach((el) => {
+        el.style.position = "absolute";
+        el.style.top = "0";
+        el.style.left = "0";
+      });
+    }
 
     fabricRef.current = canvas;
+    readyRef.current = true;
     setReady(true);
+    console.log("[Pitch] Canvas ready, calling onCanvasReady");
     onCanvasReady?.(canvas);
 
     return () => {
+      console.log("[Pitch] Disposing canvas");
       canvas.dispose();
       fabricRef.current = null;
+      readyRef.current = false;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 阵型变化时更新可拖拽的球员标记（SVG 已显示位置标签）
   useEffect(() => {
-    if (!ready || !fabricRef.current) return;
+    if (!readyRef.current || !fabricRef.current) return;
     const canvas = fabricRef.current;
-    // 清除旧的可拖拽球员
     const toRemove = canvas.getObjects().filter((obj) => {
       const data = (obj as fabric.FabricObject).get("data");
       return data?.type === "player";
     });
     toRemove.forEach((obj) => canvas.remove(obj));
-    // 添加可拖拽的透明标记（用于拖拽交互）
     formation.forEach((pos, i) => {
       const x = (pos.x / 100) * width;
       const y = (pos.y / 100) * height;
@@ -82,7 +98,7 @@ export function Pitch({
       canvas.add(marker);
     });
     canvas.renderAll();
-  }, [formation, ready, width, height]);
+  }, [formation, width, height]);
 
   return (
     <div

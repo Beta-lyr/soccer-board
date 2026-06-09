@@ -63,22 +63,30 @@ export default function NewTacticPage() {
 
   // 在 canvas ready 回调中注册事件
   const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
+    console.log("[Tactics] handleCanvasReady called, canvas:", canvas);
     canvasRef.current = canvas;
     saveToHistory();
 
-    if (eventsRegisteredRef.current) return;
+    if (eventsRegisteredRef.current) {
+      console.log("[Tactics] Events already registered, skipping");
+      return;
+    }
     eventsRegisteredRef.current = true;
+    console.log("[Tactics] Registering canvas events...");
 
     canvas.on("mouse:down", (opt: fabric.TPointerEventInfo) => {
       const mode = drawModeRef.current;
+      console.log("[Tactics] mouse:down, mode:", mode);
       if (mode === "select" || mode === "move") return;
       const pointer = canvas.getScenePoint(opt.e);
+      console.log("[Tactics] mouse:down at", pointer.x, pointer.y);
       drawStartRef.current = { x: pointer.x, y: pointer.y };
       isDrawingRef.current = true;
     });
 
     canvas.on("mouse:up", (opt: fabric.TPointerEventInfo) => {
       const mode = drawModeRef.current;
+      console.log("[Tactics] mouse:up, mode:", mode, "isDrawing:", isDrawingRef.current);
       if (!isDrawingRef.current || !drawStartRef.current) {
         isDrawingRef.current = false;
         return;
