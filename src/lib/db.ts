@@ -19,9 +19,16 @@ class SoccerDB extends Dexie {
     this.version(1).stores({
       players: "id, name, number, status",
       tactics: "id, name, type, formation",
-      lineupTemplates: "id, name, formation, createdAt",
+      lineupTemplates: "id, name, formation",
       matches: "id, date, opponent, status, type",
       trainings: "id, date, theme",
+    });
+    this.version(2).stores({
+      players: "id, name, number, status, createdAt",
+      tactics: "id, name, type, formation, createdAt",
+      lineupTemplates: "id, name, formation, createdAt",
+      matches: "id, date, opponent, status, type, createdAt",
+      trainings: "id, date, theme, createdAt",
     });
   }
 }
