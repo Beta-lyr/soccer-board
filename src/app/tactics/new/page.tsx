@@ -258,7 +258,7 @@ export default function NewTacticPage() {
             <div className="space-y-2">
               <Label>{t("tactics.tacticType")}</Label>
               <Select value={tacticType} onValueChange={(v) => v && setTacticType(v as TacticType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue>{TACTIC_TYPES.find((tt) => tt.value === tacticType) ? t(TACTIC_TYPES.find((tt) => tt.value === tacticType)!.key) : tacticType}</SelectValue></SelectTrigger>
                 <SelectContent>
                   {TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}
                 </SelectContent>

@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-import { useState, useRef, useCallback, useEffect } from "react";
+import { Suspense, useState, useRef, useCallback, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import * as fabric from "fabric";
 import { Header } from "@/components/layout/header";
@@ -14,7 +13,7 @@ import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools, type DrawMode } from "@/components/tactics/drawing-tools";
 import { FORMATIONS, FORMATION_LIST, type TacticType } from "@/types";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
@@ -53,11 +52,8 @@ function EditTacticContent() {
   const eventsRegisteredRef = useRef(false);
   const savedDrawingsRef = useRef<unknown>(null);
 
-  useEffect(() => {
-    drawModeRef.current = drawMode;
-  }, [drawMode]);
+  useEffect(() => { drawModeRef.current = drawMode; }, [drawMode]);
 
-  // 加载已有战术
   useEffect(() => {
     if (!id) return;
     db.tactics.get(id).then((tactic) => {
@@ -83,13 +79,8 @@ function EditTacticContent() {
 
   const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
     canvasRef.current = canvas;
-
-    // 加载已保存的画线数据
     if (savedDrawingsRef.current) {
-      canvas.loadFromJSON(savedDrawingsRef.current).then(() => {
-        canvas.renderAll();
-        saveToHistory();
-      });
+      canvas.loadFromJSON(savedDrawingsRef.current).then(() => { canvas.renderAll(); saveToHistory(); });
     } else {
       saveToHistory();
     }
@@ -107,61 +98,30 @@ function EditTacticContent() {
 
     canvas.on("mouse:up", (opt: fabric.TPointerEventInfo) => {
       const mode = drawModeRef.current;
-      if (!isDrawingRef.current || !drawStartRef.current) {
-        isDrawingRef.current = false;
-        return;
-      }
-      if (mode === "select" || mode === "move") {
-        drawStartRef.current = null;
-        isDrawingRef.current = false;
-        return;
-      }
+      if (!isDrawingRef.current || !drawStartRef.current) { isDrawingRef.current = false; return; }
+      if (mode === "select" || mode === "move") { drawStartRef.current = null; isDrawingRef.current = false; return; }
+
       const pointer = canvas.getScenePoint(opt.e);
       const start = drawStartRef.current;
       const dx = pointer.x - start.x;
       const dy = pointer.y - start.y;
-      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
-        drawStartRef.current = null;
-        isDrawingRef.current = false;
-        return;
-      }
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) { drawStartRef.current = null; isDrawingRef.current = false; return; }
 
       if (mode === "run") {
-        const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#ffffff", strokeWidth: 3, strokeDashArray: [10, 5],
-          selectable: true, evented: true,
-        });
-        path.set("data", { type: "drawing" });
-        canvas.add(path);
+        const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], { stroke: "#ffffff", strokeWidth: 3, strokeDashArray: [10, 5], selectable: true, evented: true });
+        path.set("data", { type: "drawing" }); canvas.add(path);
       } else if (mode === "pass") {
-        const line = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#facc15", strokeWidth: 3, selectable: true, evented: true,
-        });
-        line.set("data", { type: "drawing" });
-        canvas.add(line);
+        const line = new fabric.Line([start.x, start.y, pointer.x, pointer.y], { stroke: "#facc15", strokeWidth: 3, selectable: true, evented: true });
+        line.set("data", { type: "drawing" }); canvas.add(line);
         const angle = Math.atan2(dy, dx);
-        const arrow = new fabric.Triangle({
-          left: pointer.x, top: pointer.y, width: 14, height: 14,
-          fill: "#facc15", angle: (angle * 180) / Math.PI + 90,
-          originX: "center", originY: "center", selectable: false, evented: false,
-        });
-        arrow.set("data", { type: "drawing" });
-        canvas.add(arrow);
+        const arrow = new fabric.Triangle({ left: pointer.x, top: pointer.y, width: 14, height: 14, fill: "#facc15", angle: (angle * 180) / Math.PI + 90, originX: "center", originY: "center", selectable: false, evented: false });
+        arrow.set("data", { type: "drawing" }); canvas.add(arrow);
       } else if (mode === "dribble") {
-        const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#38bdf8", strokeWidth: 4, selectable: true, evented: true,
-        });
-        path.set("data", { type: "drawing" });
-        canvas.add(path);
+        const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], { stroke: "#38bdf8", strokeWidth: 4, selectable: true, evented: true });
+        path.set("data", { type: "drawing" }); canvas.add(path);
       } else if (mode === "defend") {
-        const rect = new fabric.Rect({
-          left: Math.min(start.x, pointer.x), top: Math.min(start.y, pointer.y),
-          width: Math.abs(dx), height: Math.abs(dy),
-          fill: "rgba(239, 68, 68, 0.15)", stroke: "rgba(239, 68, 68, 0.5)",
-          strokeWidth: 1, selectable: true, evented: true,
-        });
-        rect.set("data", { type: "drawing" });
-        canvas.add(rect);
+        const rect = new fabric.Rect({ left: Math.min(start.x, pointer.x), top: Math.min(start.y, pointer.y), width: Math.abs(dx), height: Math.abs(dy), fill: "rgba(239, 68, 68, 0.15)", stroke: "rgba(239, 68, 68, 0.5)", strokeWidth: 1, selectable: true, evented: true });
+        rect.set("data", { type: "drawing" }); canvas.add(rect);
       }
 
       drawStartRef.current = null;
@@ -172,44 +132,21 @@ function EditTacticContent() {
   }, [saveToHistory]);
 
   const updateCanvasMode = useCallback((mode: DrawMode) => {
-    setDrawMode(mode);
-    drawModeRef.current = mode;
+    setDrawMode(mode); drawModeRef.current = mode;
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
     canvas.selection = mode === "select";
     canvas.getObjects().forEach((obj) => {
       const data = (obj as fabric.FabricObject).get("data");
-      if (data?.type === "drawing") {
-        obj.selectable = mode === "select";
-        obj.evented = mode === "select";
-      }
+      if (data?.type === "drawing") { obj.selectable = mode === "select"; obj.evented = mode === "select"; }
     });
     canvas.renderAll();
   }, []);
 
-  const handleUndo = () => {
-    if (historyIndexRef.current <= 0 || !canvasRef.current) return;
-    historyIndexRef.current--;
-    canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
-  };
-  const handleRedo = () => {
-    if (historyIndexRef.current >= historyRef.current.length - 1 || !canvasRef.current) return;
-    historyIndexRef.current++;
-    canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
-  };
-  const handleClear = () => {
-    if (!canvasRef.current) return;
-    canvasRef.current.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing").forEach((obj) => canvasRef.current!.remove(obj));
-    canvasRef.current.renderAll();
-    saveToHistory();
-  };
-  const handleExport = () => {
-    if (!canvasRef.current) return;
-    const link = document.createElement("a");
-    link.download = `tactic_${name || "untitled"}.png`;
-    link.href = canvasRef.current.toDataURL({ format: "png", multiplier: 2 });
-    link.click();
-  };
+  const handleUndo = () => { if (historyIndexRef.current <= 0 || !canvasRef.current) return; historyIndexRef.current--; canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll()); };
+  const handleRedo = () => { if (historyIndexRef.current >= historyRef.current.length - 1 || !canvasRef.current) return; historyIndexRef.current++; canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll()); };
+  const handleClear = () => { if (!canvasRef.current) return; canvasRef.current.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing").forEach((obj) => canvasRef.current!.remove(obj)); canvasRef.current.renderAll(); saveToHistory(); };
+  const handleExport = () => { if (!canvasRef.current) return; const link = document.createElement("a"); link.download = `tactic_${name || "untitled"}.png`; link.href = canvasRef.current.toDataURL({ format: "png", multiplier: 2 }); link.click(); };
 
   const handleSave = async () => {
     if (!name || !id) { toast.error("请先输入战术名称"); return; }
@@ -218,22 +155,10 @@ function EditTacticContent() {
     try {
       const canvas = canvasRef.current;
       const thumbnail = canvas.toDataURL({ format: "png", multiplier: 0.5 });
-      await db.tactics.update(id, {
-        name, type: tacticType, formation,
-        drawings: canvas.toObject(), thumbnail,
-        updatedAt: new Date().toISOString(),
-      });
+      await db.tactics.update(id, { name, type: tacticType, formation, drawings: canvas.toObject(), thumbnail, updatedAt: new Date().toISOString() });
       toast.success("已保存");
-    } catch {
-      toast.error("保存失败");
-    } finally {
-      setSaving(false);
-    }
+    } catch { toast.error("保存失败"); } finally { setSaving(false); }
   };
-
-  if (loading) {
-    return <PageTransition><Header title="加载中..." /><div className="flex-1 p-6 text-center text-muted-foreground">加载中...</div></PageTransition>;
-  }
 
   const TACTIC_TYPES: { value: TacticType; key: string }[] = [
     { value: "open_play", key: "tactics.openPlay" },
@@ -242,16 +167,13 @@ function EditTacticContent() {
     { value: "throw_in", key: "tactics.throwIn" },
   ];
 
+  if (loading) return <PageTransition><Header title="加载中..." /><div className="flex-1 p-6 text-center text-muted-foreground">加载中...</div></PageTransition>;
+
   return (
     <PageTransition>
       <Header
         title={`编辑: ${name}`}
-        actions={
-          <div className="flex gap-2">
-            <Link href="/tactics/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回</Button></Link>
-            <Button size="sm" onClick={handleSave} disabled={!name || saving}><Save className="h-4 w-4 mr-1" />{saving ? "..." : "保存"}</Button>
-          </div>
-        }
+        actions={<Link href="/tactics/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回</Button></Link>}
       />
       <div className="flex-1 p-4 md:p-6">
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
@@ -260,7 +182,7 @@ function EditTacticContent() {
             <div className="space-y-2">
               <Label>{t("tactics.tacticType")}</Label>
               <Select value={tacticType} onValueChange={(v) => v && setTacticType(v as TacticType)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue>{TACTIC_TYPES.find((tt) => tt.value === tacticType) ? t(TACTIC_TYPES.find((tt) => tt.value === tacticType)!.key) : tacticType}</SelectValue></SelectTrigger>
                 <SelectContent>{TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -274,9 +196,7 @@ function EditTacticContent() {
           </div>
           <div className="flex-1 space-y-3 overflow-x-auto">
             <DrawingTools mode={drawMode} onModeChange={updateCanvasMode} onUndo={handleUndo} onRedo={handleRedo} onClear={handleClear} onExport={handleExport} onSave={handleSave} />
-            <div className="flex justify-center">
-              <Pitch formation={FORMATIONS[formation]} onCanvasReady={handleCanvasReady} />
-            </div>
+            <div className="flex justify-center"><Pitch formation={FORMATIONS[formation]} onCanvasReady={handleCanvasReady} /></div>
           </div>
         </div>
       </div>
