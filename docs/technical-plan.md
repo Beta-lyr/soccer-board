@@ -248,7 +248,7 @@ interface Training {
 
 ## 七、Cloudflare Pages 部署流程
 
-### 7.1 Next.js 配置（已完成）
+### 7.1 Next.js 配置
 
 ```typescript
 // next.config.ts
@@ -259,7 +259,7 @@ const nextConfig = {
 };
 ```
 
-### 7.2 方式一：Git 集成部署（推荐，自动 CI/CD）
+### 7.2 方式一：Git 集成部署
 
 **一次性配置，之后每次 push main 自动部署：**
 
