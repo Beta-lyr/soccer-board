@@ -1,6 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import * as fabric from "fabric";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -18,7 +20,6 @@ import { db } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
 
-// 加载自定义阵型
 if (typeof window !== "undefined") {
   try {
     const customs = JSON.parse(localStorage.getItem("customFormations") || "{}");
@@ -31,12 +32,17 @@ if (typeof window !== "undefined") {
   } catch {}
 }
 
-export default function NewTacticPage() {
+function EditTacticContent() {
   const { t } = useI18n();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+
   const [name, setName] = useState("");
   const [tacticType, setTacticType] = useState<TacticType>("open_play");
   const [formation, setFormation] = useState("4-4-2");
   const [drawMode, setDrawMode] = useState<DrawMode>("select");
+  const [loading, setLoading] = useState(true);
   const canvasRef = useRef<fabric.Canvas | null>(null);
   const drawModeRef = useRef<DrawMode>("select");
   const isDrawingRef = useRef(false);
@@ -45,11 +51,25 @@ export default function NewTacticPage() {
   const historyIndexRef = useRef(-1);
   const [saving, setSaving] = useState(false);
   const eventsRegisteredRef = useRef(false);
+  const savedDrawingsRef = useRef<unknown>(null);
 
-  // 同步 drawMode 到 ref
   useEffect(() => {
     drawModeRef.current = drawMode;
   }, [drawMode]);
+
+  // 加载已有战术
+  useEffect(() => {
+    if (!id) return;
+    db.tactics.get(id).then((tactic) => {
+      if (tactic) {
+        setName(tactic.name);
+        setTacticType(tactic.type);
+        setFormation(tactic.formation);
+        savedDrawingsRef.current = tactic.drawings;
+      }
+      setLoading(false);
+    });
+  }, [id]);
 
   const saveToHistory = useCallback(() => {
     if (!canvasRef.current) return;
@@ -61,10 +81,18 @@ export default function NewTacticPage() {
     } catch {}
   }, []);
 
-  // 在 canvas ready 回调中注册事件
   const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
     canvasRef.current = canvas;
-    saveToHistory();
+
+    // 加载已保存的画线数据
+    if (savedDrawingsRef.current) {
+      canvas.loadFromJSON(savedDrawingsRef.current).then(() => {
+        canvas.renderAll();
+        saveToHistory();
+      });
+    } else {
+      saveToHistory();
+    }
 
     if (eventsRegisteredRef.current) return;
     eventsRegisteredRef.current = true;
@@ -88,12 +116,10 @@ export default function NewTacticPage() {
         isDrawingRef.current = false;
         return;
       }
-
       const pointer = canvas.getScenePoint(opt.e);
       const start = drawStartRef.current;
       const dx = pointer.x - start.x;
       const dy = pointer.y - start.y;
-
       if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
         drawStartRef.current = null;
         isDrawingRef.current = false;
@@ -166,22 +192,17 @@ export default function NewTacticPage() {
     historyIndexRef.current--;
     canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
   };
-
   const handleRedo = () => {
     if (historyIndexRef.current >= historyRef.current.length - 1 || !canvasRef.current) return;
     historyIndexRef.current++;
     canvasRef.current.loadFromJSON(historyRef.current[historyIndexRef.current]).then(() => canvasRef.current?.renderAll());
   };
-
   const handleClear = () => {
     if (!canvasRef.current) return;
-    canvasRef.current.getObjects()
-      .filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing")
-      .forEach((obj) => canvasRef.current!.remove(obj));
+    canvasRef.current.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing").forEach((obj) => canvasRef.current!.remove(obj));
     canvasRef.current.renderAll();
     saveToHistory();
   };
-
   const handleExport = () => {
     if (!canvasRef.current) return;
     const link = document.createElement("a");
@@ -191,31 +212,28 @@ export default function NewTacticPage() {
   };
 
   const handleSave = async () => {
-    if (!name) { toast.error("请先输入战术名称"); return; }
+    if (!name || !id) { toast.error("请先输入战术名称"); return; }
     if (!canvasRef.current) return;
     setSaving(true);
     try {
       const canvas = canvasRef.current;
-      const positions = canvas.getObjects()
-        .filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "player")
-        .map((obj) => ({
-          playerId: "", x: ((obj.left ?? 0) / 600) * 100, y: ((obj.top ?? 0) / 750) * 100,
-          label: (obj as fabric.FabricObject).get("data")?.position,
-        }));
       const thumbnail = canvas.toDataURL({ format: "png", multiplier: 0.5 });
-      await db.tactics.add({
-        id: crypto.randomUUID(), name, type: tacticType, formation,
-        players: positions, drawings: canvas.toObject(), thumbnail,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      await db.tactics.update(id, {
+        name, type: tacticType, formation,
+        drawings: canvas.toObject(), thumbnail,
+        updatedAt: new Date().toISOString(),
       });
-      toast.success(t("tactics.saved"));
-    } catch (e) {
-      console.error("Save failed:", e);
+      toast.success("已保存");
+    } catch {
       toast.error("保存失败");
     } finally {
       setSaving(false);
     }
   };
+
+  if (loading) {
+    return <PageTransition><Header title="加载中..." /><div className="flex-1 p-6 text-center text-muted-foreground">加载中...</div></PageTransition>;
+  }
 
   const TACTIC_TYPES: { value: TacticType; key: string }[] = [
     { value: "open_play", key: "tactics.openPlay" },
@@ -227,60 +245,35 @@ export default function NewTacticPage() {
   return (
     <PageTransition>
       <Header
-        title={t("tactics.newTactic")}
+        title={`编辑: ${name}`}
         actions={
           <div className="flex gap-2">
-            <Link href="/tactics/">
-              <Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />{t("common.back")}</Button>
-            </Link>
-            <Button size="sm" onClick={handleSave} disabled={!name || saving}>
-              <Save className="h-4 w-4 mr-1" />{saving ? "..." : t("common.save")}
-            </Button>
+            <Link href="/tactics/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回</Button></Link>
+            <Button size="sm" onClick={handleSave} disabled={!name || saving}><Save className="h-4 w-4 mr-1" />{saving ? "..." : "保存"}</Button>
           </div>
         }
       />
       <div className="flex-1 p-4 md:p-6">
         <div className="flex flex-col lg:flex-row gap-4 md:gap-6">
-          {/* 左侧设置 */}
           <div className="w-full lg:w-56 space-y-4 shrink-0">
-            <div className="space-y-2">
-              <Label>{t("tactics.tacticName")}</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("tactics.tacticNamePlaceholder")} />
-            </div>
+            <div className="space-y-2"><Label>{t("tactics.tacticName")}</Label><Input value={name} onChange={(e) => setName(e.target.value)} /></div>
             <div className="space-y-2">
               <Label>{t("tactics.tacticType")}</Label>
               <Select value={tacticType} onValueChange={(v) => v && setTacticType(v as TacticType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}
-                </SelectContent>
+                <SelectContent>{TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>{t("tactics.formation")}</Label>
-              <FormationPicker value={formation} onChange={setFormation} />
-            </div>
+            <div className="space-y-2"><Label>{t("tactics.formation")}</Label><FormationPicker value={formation} onChange={setFormation} /></div>
             <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
               <p className="font-medium text-sm">{t("tactics.tips")}</p>
-              <p className="text-muted-foreground">• {t("tactics.tipMove")}</p>
-              <p className="text-muted-foreground">• {t("tactics.tipRun")}</p>
-              <p className="text-muted-foreground">• {t("tactics.tipPass")}</p>
-              <p className="text-muted-foreground">• {t("tactics.tipDribble")}</p>
-              <p className="text-muted-foreground">• {t("tactics.tipDefend")}</p>
+              <p className="text-muted-foreground">• 选择模式：点击选中画线</p>
+              <p className="text-muted-foreground">• 拖拽模式：拖动元素</p>
+              <p className="text-muted-foreground">• 跑位/传球/带球/防守：拖拽画线</p>
             </div>
           </div>
-
-          {/* 右侧画板 */}
           <div className="flex-1 space-y-3 overflow-x-auto">
-            <DrawingTools
-              mode={drawMode}
-              onModeChange={updateCanvasMode}
-              onUndo={handleUndo}
-              onRedo={handleRedo}
-              onClear={handleClear}
-              onExport={handleExport}
-              onSave={handleSave}
-            />
+            <DrawingTools mode={drawMode} onModeChange={updateCanvasMode} onUndo={handleUndo} onRedo={handleRedo} onClear={handleClear} onExport={handleExport} onSave={handleSave} />
             <div className="flex justify-center">
               <Pitch formation={FORMATIONS[formation]} onCanvasReady={handleCanvasReady} />
             </div>
@@ -289,4 +282,8 @@ export default function NewTacticPage() {
       </div>
     </PageTransition>
   );
+}
+
+export default function EditTacticPage() {
+  return <Suspense fallback={<div className="flex-1 p-6 text-center text-muted-foreground">加载中...</div>}><EditTacticContent /></Suspense>;
 }

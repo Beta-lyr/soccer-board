@@ -5,8 +5,9 @@ import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { HoverCard } from "@/components/ui/hover-card";
-import { PlayerCard } from "@/components/players/player-card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { StatusBadge } from "@/components/players/status-badge";
 import { PlayerForm } from "@/components/players/player-form";
 import { usePlayers } from "@/hooks/use-players";
 import { Plus, Upload, Search } from "lucide-react";
@@ -64,44 +65,54 @@ export default function PlayersPage() {
         </motion.div>
 
         {filtered.length === 0 ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-12 text-muted-foreground"
-          >
+          <div className="text-center py-12 text-muted-foreground">
             <p className="text-lg">
               {players.length === 0 ? t("players.noPlayers") : t("players.noMatch")}
             </p>
-            <p className="text-sm mt-1">
-              {players.length === 0 && t("players.addPlayer")}
-            </p>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div
-            initial="hidden"
-            animate="show"
-            variants={{
-              hidden: { opacity: 0 },
-              show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-            }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4"
-          >
-            {filtered.map((player) => (
-              <motion.div
-                key={player.id}
-                variants={{
-                  hidden: { opacity: 0, y: 16, scale: 0.97 },
-                  show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4 } },
-                }}
-              >
-                <Link href={`/players/detail/?id=${player.id}`}>
-                  <HoverCard>
-                    <PlayerCard player={player} />
-                  </HoverCard>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {filtered.map((player) => {
+              const avgScore = (Object.values(player.abilities).reduce((a, b) => a + b, 0) / 6).toFixed(1);
+              return (
+                <motion.div
+                  key={player.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link href={`/players/detail/?id=${player.id}`}>
+                    <Card className="cursor-pointer hover:border-primary/30 hover:shadow-md transition-all">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                            <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
+                              {player.number}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold truncate">{player.name}</span>
+                              <StatusBadge status={player.status} />
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-0.5">
+                              {player.positions.join(" · ")}
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className="text-2xl font-black text-primary tabular-nums">{avgScore}</div>
+                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                              {t("players.overall")}
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </div>
 
