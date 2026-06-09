@@ -75,17 +75,19 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
     setAbilities({ speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!name || !number) return;
-    onSubmit({
-      name, number: parseInt(number),
-      height: height ? parseInt(height) : undefined,
-      weight: weight ? parseInt(weight) : undefined,
-      preferredFoot, positions: selectedPositions, status, abilities,
-      avatar: initialData?.avatar,
-    });
-    onOpenChange(false);
-    resetForm();
+    try {
+      await onSubmit({
+        name, number: parseInt(number),
+        height: height ? parseInt(height) : undefined,
+        weight: weight ? parseInt(weight) : undefined,
+        preferredFoot, positions: selectedPositions, status, abilities,
+        avatar: initialData?.avatar,
+      });
+    } catch (e) {
+      console.error("Failed to save player:", e);
+    }
   };
 
   const updateAbility = (key: keyof PlayerAbilities, value: string) => {

@@ -106,9 +106,13 @@ export default function PlayersPage() {
       </div>
 
       <PlayerForm
+        key={showForm ? "open" : "closed"}
         open={showForm}
         onOpenChange={setShowForm}
-        onSubmit={(data) => addPlayer(data as Parameters<typeof addPlayer>[0])}
+        onSubmit={async (data) => {
+          await addPlayer(data);
+          setShowForm(false);
+        }}
       />
     </PageTransition>
   );

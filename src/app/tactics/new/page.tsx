@@ -17,11 +17,22 @@ import {
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools, type DrawMode } from "@/components/tactics/drawing-tools";
-import { FORMATIONS, type TacticType } from "@/types";
+import { FORMATIONS, FORMATION_LIST, type TacticType } from "@/types";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
+
+// 加载自定义阵型
+if (typeof window !== "undefined") {
+  const customs = JSON.parse(localStorage.getItem("customFormations") || "{}");
+  Object.entries(customs).forEach(([name, positions]) => {
+    if (!FORMATIONS[name]) {
+      FORMATIONS[name] = positions as typeof FORMATIONS[string];
+      if (!FORMATION_LIST.includes(name)) FORMATION_LIST.push(name);
+    }
+  });
+}
 
 export default function NewTacticPage() {
   const { t } = useI18n();
@@ -157,18 +168,28 @@ export default function NewTacticPage() {
 
   const handleSave = async () => {
     if (!canvasRef.current || !name) return;
-    const canvas = canvasRef.current;
-    const positions = canvas.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "player").map((obj) => ({
-      playerId: "", x: ((obj.left ?? 0) / 600) * 100, y: ((obj.top ?? 0) / 750) * 100,
-      label: (obj as fabric.FabricObject).get("data")?.position,
-    }));
-    await db.tactics.add({
-      id: crypto.randomUUID(), name, type: tacticType, formation,
-      players: positions, drawings: canvas.toObject(),
-      thumbnail: canvas.toDataURL({ format: "png", multiplier: 0.5 }),
-      createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
-    });
-    alert(t("tactics.saved"));
+    try {
+      const canvas = canvasRef.current;
+      const positions = canvas.getObjects()
+        .filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "player")
+        .map((obj) => ({
+          playerId: "",
+          x: ((obj.left ?? 0) / 600) * 100,
+          y: ((obj.top ?? 0) / 750) * 100,
+          label: (obj as fabric.FabricObject).get("data")?.position,
+        }));
+      const thumbnail = canvas.toDataURL({ format: "png", multiplier: 0.5 });
+      await db.tactics.add({
+        id: crypto.randomUUID(), name, type: tacticType, formation,
+        players: positions, drawings: canvas.toObject(),
+        thumbnail,
+        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
+      });
+      alert(t("tactics.saved"));
+    } catch (e) {
+      console.error("Save failed:", e);
+      alert("保存失败: " + (e instanceof Error ? e.message : "未知错误"));
+    }
   };
 
   return (

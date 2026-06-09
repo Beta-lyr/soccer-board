@@ -5,7 +5,7 @@ import * as fabric from "fabric";
 import { PitchSvg } from "./pitch-svg";
 import type { FormationPosition } from "@/types";
 
-const PLAYER_RADIUS = 18;
+const PLAYER_RADIUS = 20;
 
 interface PitchProps {
   formation: FormationPosition[];
@@ -31,24 +31,26 @@ export function Pitch({
         const x = (pos.x / 100) * width;
         const y = (pos.y / 100) * height;
 
+        // 白色圆圈
         const circle = new fabric.Circle({
           radius: PLAYER_RADIUS,
           fill: "rgba(255,255,255,0.95)",
-          stroke: "#166534",
-          strokeWidth: 2.5,
+          stroke: "rgba(0,0,0,0.6)",
+          strokeWidth: 2,
           originX: "center",
           originY: "center",
           shadow: new fabric.Shadow({
-            color: "rgba(0,0,0,0.3)",
-            blur: 4,
+            color: "rgba(0,0,0,0.4)",
+            blur: 6,
             offsetY: 2,
           }),
         });
 
+        // 位置文字（黑色，加粗）
         const text = new fabric.Text(pos.position, {
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: "bold",
-          fill: "#166534",
+          fill: "#1a1a1a",
           originX: "center",
           originY: "center",
           fontFamily: "sans-serif",
@@ -60,6 +62,7 @@ export function Pitch({
           originX: "center",
           originY: "center",
           hasControls: false,
+          hasBorders: false,
         });
 
         group.set("data", { type: "player", index: i, position: pos.position });
@@ -79,9 +82,8 @@ export function Pitch({
       transparentCorners: false,
     });
 
-    // 让 canvas 浮在 SVG 上层
-    const container = containerRef.current;
-    const canvasEl = container.querySelector("canvas");
+    // canvas 浮在 SVG 上层，透明背景
+    const canvasEl = containerRef.current.querySelector("canvas");
     if (canvasEl) {
       canvasEl.style.position = "absolute";
       canvasEl.style.top = "0";
@@ -99,11 +101,12 @@ export function Pitch({
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 阵型变化时更新球员位置
   useEffect(() => {
     if (!ready || !fabricRef.current) return;
     const canvas = fabricRef.current;
     const toRemove = canvas.getObjects().filter((obj) => {
-      const data = (obj as fabric.Group).get("data");
+      const data = (obj as fabric.FabricObject).get("data");
       return data?.type === "player";
     });
     toRemove.forEach((obj) => canvas.remove(obj));
