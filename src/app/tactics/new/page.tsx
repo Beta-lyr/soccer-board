@@ -76,17 +76,17 @@ export default function NewTacticPage() {
 
     canvas.on("mouse:down", (opt: fabric.TPointerEventInfo) => {
       const mode = drawModeRef.current;
-      console.log("[Tactics] mouse:down, mode:", mode);
+      console.log("[Draw] mouse:down mode=" + mode);
       if (mode === "select" || mode === "move") return;
       const pointer = canvas.getScenePoint(opt.e);
-      console.log("[Tactics] mouse:down at", pointer.x, pointer.y);
       drawStartRef.current = { x: pointer.x, y: pointer.y };
       isDrawingRef.current = true;
+      console.log("[Draw] start at", Math.round(pointer.x), Math.round(pointer.y));
     });
 
     canvas.on("mouse:up", (opt: fabric.TPointerEventInfo) => {
       const mode = drawModeRef.current;
-      console.log("[Tactics] mouse:up, mode:", mode, "isDrawing:", isDrawingRef.current);
+      console.log("[Draw] mouse:up mode=" + mode + " isDrawing=" + isDrawingRef.current + " hasStart=" + !!drawStartRef.current);
       if (!isDrawingRef.current || !drawStartRef.current) {
         isDrawingRef.current = false;
         return;
@@ -101,12 +101,17 @@ export default function NewTacticPage() {
       const start = drawStartRef.current;
       const dx = pointer.x - start.x;
       const dy = pointer.y - start.y;
+      console.log("[Draw] end at", Math.round(pointer.x), Math.round(pointer.y), "dx=" + Math.round(dx) + " dy=" + Math.round(dy));
 
       if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+        console.log("[Draw] drag too small, ignoring");
         drawStartRef.current = null;
         isDrawingRef.current = false;
         return;
       }
+
+      console.log("[Draw] Creating " + mode + " line...");
+
 
       if (mode === "run") {
         const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
@@ -149,6 +154,7 @@ export default function NewTacticPage() {
       drawStartRef.current = null;
       isDrawingRef.current = false;
       canvas.renderAll();
+      console.log("[Draw] Done. Total objects:", canvas.getObjects().length);
       saveToHistory();
     });
   }, [saveToHistory]);
