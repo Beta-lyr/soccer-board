@@ -1,19 +1,13 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import * as fabric from "fabric";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools, type DrawMode } from "@/components/tactics/drawing-tools";
@@ -22,16 +16,19 @@ import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { useI18n } from "@/lib/i18n";
+import { toast } from "sonner";
 
 // 加载自定义阵型
 if (typeof window !== "undefined") {
-  const customs = JSON.parse(localStorage.getItem("customFormations") || "{}");
-  Object.entries(customs).forEach(([name, positions]) => {
-    if (!FORMATIONS[name]) {
-      FORMATIONS[name] = positions as typeof FORMATIONS[string];
-      if (!FORMATION_LIST.includes(name)) FORMATION_LIST.push(name);
-    }
-  });
+  try {
+    const customs = JSON.parse(localStorage.getItem("customFormations") || "{}");
+    Object.entries(customs).forEach(([name, positions]) => {
+      if (!FORMATIONS[name]) {
+        FORMATIONS[name] = positions as typeof FORMATIONS[string];
+        if (!FORMATION_LIST.includes(name)) FORMATION_LIST.push(name);
+      }
+    });
+  } catch {}
 }
 
 export default function NewTacticPage() {
@@ -41,73 +38,88 @@ export default function NewTacticPage() {
   const [formation, setFormation] = useState("4-4-2");
   const [drawMode, setDrawMode] = useState<DrawMode>("select");
   const canvasRef = useRef<fabric.Canvas | null>(null);
-  const [isDrawing, setIsDrawing] = useState(false);
+  const drawModeRef = useRef<DrawMode>("select");
   const drawStartRef = useRef<{ x: number; y: number } | null>(null);
   const historyRef = useRef<string[]>([]);
   const historyIndexRef = useRef(-1);
+  const [saving, setSaving] = useState(false);
 
-  const TACTIC_TYPES: { value: TacticType; key: string }[] = [
-    { value: "open_play", key: "tactics.openPlay" },
-    { value: "corner", key: "tactics.corner" },
-    { value: "free_kick", key: "tactics.freeKick" },
-    { value: "throw_in", key: "tactics.throwIn" },
-  ];
+  // 同步 drawMode 到 ref
+  useEffect(() => {
+    drawModeRef.current = drawMode;
+  }, [drawMode]);
 
   const saveToHistory = useCallback(() => {
     if (!canvasRef.current) return;
-    const json = JSON.stringify(canvasRef.current.toObject());
-    historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
-    historyRef.current.push(json);
-    historyIndexRef.current = historyRef.current.length - 1;
+    try {
+      const json = JSON.stringify(canvasRef.current.toObject());
+      historyRef.current = historyRef.current.slice(0, historyIndexRef.current + 1);
+      historyRef.current.push(json);
+      historyIndexRef.current = historyRef.current.length - 1;
+    } catch {}
   }, []);
 
-  const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
-    canvasRef.current = canvas;
-    saveToHistory();
+  // 注册 canvas 事件（只注册一次）
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    canvas.on("mouse:down", (opt) => {
-      if (drawMode === "select" || drawMode === "move") return;
+    const onMouseDown = (opt: fabric.TPointerEventInfo) => {
+      const mode = drawModeRef.current;
+      if (mode === "select" || mode === "move") return;
       const pointer = canvas.getScenePoint(opt.e);
       drawStartRef.current = { x: pointer.x, y: pointer.y };
-      setIsDrawing(true);
-    });
+    };
 
-    canvas.on("mouse:up", (opt) => {
-      if (!isDrawing || !drawStartRef.current) return;
+    const onMouseUp = (opt: fabric.TPointerEventInfo) => {
+      const mode = drawModeRef.current;
+      if (!drawStartRef.current) return;
+      if (mode === "select" || mode === "move") {
+        drawStartRef.current = null;
+        return;
+      }
+
       const pointer = canvas.getScenePoint(opt.e);
       const start = drawStartRef.current;
+      const dx = pointer.x - start.x;
+      const dy = pointer.y - start.y;
+      // 忽略太小的拖拽
+      if (Math.abs(dx) < 5 && Math.abs(dy) < 5) {
+        drawStartRef.current = null;
+        return;
+      }
 
-      if (drawMode === "run") {
+      if (mode === "run") {
         const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
-          stroke: "#ffffff", strokeWidth: 3, strokeDashArray: [8, 4],
+          stroke: "#ffffff", strokeWidth: 3, strokeDashArray: [10, 5],
           selectable: true, evented: true,
         });
         path.set("data", { type: "drawing" });
         canvas.add(path);
-      } else if (drawMode === "pass") {
+      } else if (mode === "pass") {
         const line = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
           stroke: "#facc15", strokeWidth: 3, selectable: true, evented: true,
         });
         line.set("data", { type: "drawing" });
         canvas.add(line);
-        const angle = Math.atan2(pointer.y - start.y, pointer.x - start.x);
+        const angle = Math.atan2(dy, dx);
         const arrow = new fabric.Triangle({
-          left: pointer.x, top: pointer.y, width: 12, height: 12,
+          left: pointer.x, top: pointer.y, width: 14, height: 14,
           fill: "#facc15", angle: (angle * 180) / Math.PI + 90,
           originX: "center", originY: "center", selectable: false, evented: false,
         });
         arrow.set("data", { type: "drawing" });
         canvas.add(arrow);
-      } else if (drawMode === "dribble") {
+      } else if (mode === "dribble") {
         const path = new fabric.Line([start.x, start.y, pointer.x, pointer.y], {
           stroke: "#38bdf8", strokeWidth: 4, selectable: true, evented: true,
         });
         path.set("data", { type: "drawing" });
         canvas.add(path);
-      } else if (drawMode === "defend") {
+      } else if (mode === "defend") {
         const rect = new fabric.Rect({
           left: Math.min(start.x, pointer.x), top: Math.min(start.y, pointer.y),
-          width: Math.abs(pointer.x - start.x), height: Math.abs(pointer.y - start.y),
+          width: Math.abs(dx), height: Math.abs(dy),
           fill: "rgba(239, 68, 68, 0.15)", stroke: "rgba(239, 68, 68, 0.5)",
           strokeWidth: 1, selectable: true, evented: true,
         });
@@ -116,22 +128,33 @@ export default function NewTacticPage() {
       }
 
       drawStartRef.current = null;
-      setIsDrawing(false);
+      canvas.renderAll();
       saveToHistory();
-    });
-  }, [drawMode, isDrawing, saveToHistory]);
+    };
+
+    canvas.on("mouse:down", onMouseDown);
+    canvas.on("mouse:up", onMouseUp);
+
+    return () => {
+      canvas.off("mouse:down", onMouseDown);
+      canvas.off("mouse:up", onMouseUp);
+    };
+  }, [saveToHistory]); // 只在 mount 时注册
+
+  const handleCanvasReady = useCallback((canvas: fabric.Canvas) => {
+    canvasRef.current = canvas;
+    saveToHistory();
+  }, [saveToHistory]);
 
   const updateCanvasMode = useCallback((mode: DrawMode) => {
     setDrawMode(mode);
+    drawModeRef.current = mode;
     if (!canvasRef.current) return;
     const canvas = canvasRef.current;
     canvas.selection = mode === "select";
     canvas.getObjects().forEach((obj) => {
       const data = (obj as fabric.FabricObject).get("data");
-      if (data?.type === "player") {
-        obj.selectable = mode === "move";
-        obj.evented = mode === "move" || mode === "select";
-      } else if (data?.type === "drawing") {
+      if (data?.type === "drawing") {
         obj.selectable = mode === "select";
         obj.evented = mode === "select";
       }
@@ -153,7 +176,9 @@ export default function NewTacticPage() {
 
   const handleClear = () => {
     if (!canvasRef.current) return;
-    canvasRef.current.getObjects().filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing").forEach((obj) => canvasRef.current!.remove(obj));
+    canvasRef.current.getObjects()
+      .filter((obj) => (obj as fabric.FabricObject).get("data")?.type === "drawing")
+      .forEach((obj) => canvasRef.current!.remove(obj));
     canvasRef.current.renderAll();
     saveToHistory();
   };
@@ -168,10 +193,11 @@ export default function NewTacticPage() {
 
   const handleSave = async () => {
     if (!name) {
-      alert("请先输入战术名称");
+      toast.error("请先输入战术名称");
       return;
     }
     if (!canvasRef.current) return;
+    setSaving(true);
     try {
       const canvas = canvasRef.current;
       const positions = canvas.getObjects()
@@ -189,12 +215,21 @@ export default function NewTacticPage() {
         thumbnail,
         createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       });
-      alert(t("tactics.saved"));
+      toast.success(t("tactics.saved"));
     } catch (e) {
       console.error("Save failed:", e);
-      alert("保存失败: " + (e instanceof Error ? e.message : "未知错误"));
+      toast.error("保存失败: " + (e instanceof Error ? e.message : "未知错误"));
+    } finally {
+      setSaving(false);
     }
   };
+
+  const TACTIC_TYPES: { value: TacticType; key: string }[] = [
+    { value: "open_play", key: "tactics.openPlay" },
+    { value: "corner", key: "tactics.corner" },
+    { value: "free_kick", key: "tactics.freeKick" },
+    { value: "throw_in", key: "tactics.throwIn" },
+  ];
 
   return (
     <PageTransition>
@@ -203,8 +238,7 @@ export default function NewTacticPage() {
         actions={
           <Link href="/tactics/">
             <Button variant="outline" size="sm">
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              {t("common.back")}
+              <ArrowLeft className="h-4 w-4 mr-1" />{t("common.back")}
             </Button>
           </Link>
         }
@@ -238,10 +272,9 @@ export default function NewTacticPage() {
               <p className="text-muted-foreground">• {t("tactics.tipDribble")}</p>
               <p className="text-muted-foreground">• {t("tactics.tipDefend")}</p>
             </div>
-
-            <Button className="w-full" onClick={handleSave} disabled={!name}>
+            <Button className="w-full" onClick={handleSave} disabled={!name || saving}>
               <Save className="h-4 w-4 mr-2" />
-              {t("common.save")}
+              {saving ? "保存中..." : t("common.save")}
             </Button>
           </div>
 

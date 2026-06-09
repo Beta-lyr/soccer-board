@@ -85,6 +85,7 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
         preferredFoot, positions: selectedPositions, status, abilities,
         avatar: initialData?.avatar,
       });
+      onOpenChange(false);
     } catch (e) {
       console.error("Failed to save player:", e);
     }
