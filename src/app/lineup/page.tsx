@@ -1,222 +1,117 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { FormationPicker } from "@/components/tactics/formation-picker";
-import { PitchSvg } from "@/components/tactics/pitch-svg";
-import { usePlayers } from "@/hooks/use-players";
 import { useLineupTemplates } from "@/hooks/use-lineup";
 import { useI18n } from "@/lib/i18n";
-import { FORMATIONS, type FormationPosition, type LineupStarter } from "@/types";
-import { Save, Trash2, FolderOpen } from "lucide-react";
+import { FORMATIONS, FORMATION_GROUPS } from "@/types";
+import { Plus, Users, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
-import type { Player } from "@/types";
+import Link from "next/link";
 import { toast } from "sonner";
 
-const PITCH_W = 500;
-const PITCH_H = 625;
+/** 根据阵型名推断人数 */
+function guessPlayerCount(formation: string): number | null {
+  for (const [countStr, group] of Object.entries(FORMATION_GROUPS)) {
+    if (formation in group) return Number(countStr);
+  }
+  // 尝试从自定义阵型推断
+  const positions = FORMATIONS[formation];
+  return positions?.length ?? null;
+}
 
-export default function LineupPage() {
+export default function LineupListPage() {
   const { t } = useI18n();
-  const { players } = usePlayers();
-  const { templates, addTemplate, deleteTemplate } = useLineupTemplates();
-  const [formation, setFormation] = useState("4-4-2");
-  const [starters, setStarters] = useState<Map<number, string>>(new Map()); // index -> playerId
-  const [templateName, setTemplateName] = useState("");
-  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  const { templates, deleteTemplate } = useLineupTemplates();
 
-  const formationPositions = FORMATIONS[formation];
-  const starterPlayerIds = new Set(starters.values());
-  const availablePlayers = players.filter((p) => !starterPlayerIds.has(p.id) && p.status === "healthy");
-  const substitutes = players.filter((p) => !starterPlayerIds.has(p.id));
-
-  useEffect(() => {
-    setStarters(new Map());
-    setSelectedIndex(null);
-  }, [formation]);
-
-  const handlePositionClick = (idx: number) => {
-    setSelectedIndex(selectedIndex === idx ? null : idx);
-  };
-
-  const handlePlayerSelect = (player: Player) => {
-    if (selectedIndex === null) return;
-    const next = new Map(starters);
-    // 如果该球员已在其他位置，先移除
-    for (const [k, v] of next) {
-      if (v === player.id) next.delete(k);
+  const handleDelete = async (id: string, name: string) => {
+    if (confirm(`确认删除阵容「${name}」？`)) {
+      await deleteTemplate(id);
+      toast.success("阵容已删除");
     }
-    next.set(selectedIndex, player.id);
-    setStarters(next);
-    setSelectedIndex(null);
   };
 
-  const handleRemoveStarter = (idx: number) => {
-    const next = new Map(starters);
-    next.delete(idx);
-    setStarters(next);
-  };
-
-  const handleSaveTemplate = async () => {
-    if (!templateName || starters.size === 0) return;
-    const lineupStarters: LineupStarter[] = [];
-    for (const [idx, playerId] of starters) {
-      const fp = formationPositions[idx];
-      if (fp) lineupStarters.push({ playerId, position: fp.position, x: fp.x, y: fp.y });
-    }
-    await addTemplate({
-      name: templateName, formation,
-      starters: lineupStarters,
-      substitutes: substitutes.map((p) => p.id),
-    });
-    setTemplateName("");
-    toast.success("阵容已保存");
-  };
-
-  const handleLoadTemplate = (templateId: string) => {
-    const template = templates.find((t) => t.id === templateId);
-    if (!template) return;
-    setFormation(template.formation);
-    const positions = FORMATIONS[template.formation];
-    const next = new Map<number, string>();
-    template.starters.forEach((s) => {
-      const idx = positions.findIndex((p) => p.position === s.position && p.x === s.x && p.y === s.y);
-      if (idx >= 0) next.set(idx, s.playerId);
-    });
-    setStarters(next);
-  };
 
   return (
     <PageTransition>
       <Header
         title={t("lineup.title")}
-        description={t("lineup.desc")}
+        description={templates.length > 0 ? `${templates.length} 个阵容模板` : t("lineup.desc")}
         actions={
-          <div className="flex gap-2">
-            <Input placeholder="阵容名称" value={templateName} onChange={(e) => setTemplateName(e.target.value)} className="w-32 h-8 text-sm" />
-            <Button size="sm" onClick={handleSaveTemplate} disabled={!templateName || starters.size === 0}>
-              <Save className="h-4 w-4 mr-1" />保存
-            </Button>
-          </div>
+          <Link href="/lineup/new/">
+            <Button size="sm"><Plus className="h-4 w-4 mr-1" />新建阵容</Button>
+          </Link>
         }
       />
       <div className="flex-1 p-4 md:p-6">
-        <div className="flex flex-col xl:flex-row gap-6">
-          {/* 左侧 */}
-          <div className="w-full xl:w-64 space-y-4">
-            <div className="space-y-2">
-              <Label>{t("tactics.formation")}</Label>
-              <FormationPicker value={formation} onChange={setFormation} />
-            </div>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase tracking-wider">首发 ({starters.size}/11)</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1.5">
-                {formationPositions.map((fp, idx) => {
-                  const playerId = starters.get(idx);
-                  const player = playerId ? players.find((p) => p.id === playerId) : null;
-                  const isSelected = selectedIndex === idx;
-                  return (
-                    <div
-                      key={idx}
-                      onClick={() => handlePositionClick(idx)}
-                      className={`flex items-center gap-2 p-2 rounded-md cursor-pointer text-sm transition-colors ${
-                        isSelected ? "bg-primary text-primary-foreground" : player ? "bg-muted hover:bg-muted/80" : "border border-dashed hover:bg-accent/50"
-                      }`}
-                    >
-                      <span className="w-8 text-xs font-mono font-bold opacity-60">{fp.position}</span>
-                      {player ? (
-                        <>
-                          <Avatar className="h-6 w-6"><AvatarFallback className="text-[10px] bg-primary text-primary-foreground">{player.number}</AvatarFallback></Avatar>
-                          <span className="flex-1 truncate font-medium">{player.name}</span>
-                          <button onClick={(e) => { e.stopPropagation(); handleRemoveStarter(idx); }} className="opacity-40 hover:opacity-100"><Trash2 className="h-3 w-3" /></button>
-                        </>
-                      ) : (
-                        <span className="text-muted-foreground text-xs">{isSelected ? "← 选择球员" : "点击选择"}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-xs uppercase tracking-wider">可选球员 ({availablePlayers.length})</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-1 max-h-48 overflow-y-auto">
-                {availablePlayers.length === 0 ? (
-                  <p className="text-xs text-muted-foreground py-2">{players.length === 0 ? "请先添加球员" : "所有健康球员已选入"}</p>
-                ) : (
-                  availablePlayers.map((player) => (
-                    <div
-                      key={player.id}
-                      onClick={() => handlePlayerSelect(player)}
-                      className={`flex items-center gap-2 p-1.5 rounded text-sm cursor-pointer transition-colors ${selectedIndex !== null ? "hover:bg-accent/50" : "opacity-50 cursor-not-allowed"}`}
-                    >
-                      <Avatar className="h-6 w-6"><AvatarFallback className="text-[10px]">{player.number}</AvatarFallback></Avatar>
-                      <span className="flex-1 truncate">{player.name}</span>
-                      <span className="text-xs text-muted-foreground">{player.positions[0]}</span>
-                    </div>
-                  ))
-                )}
-              </CardContent>
-            </Card>
-
-            {templates.length > 0 && (
-              <Card>
-                <CardHeader className="pb-2"><CardTitle className="text-xs uppercase tracking-wider">阵容模板</CardTitle></CardHeader>
-                <CardContent className="space-y-1.5">
-                  {templates.map((tmpl) => (
-                    <div key={tmpl.id} className="flex items-center gap-2 p-1.5 rounded text-sm">
-                      <button onClick={() => handleLoadTemplate(tmpl.id)} className="flex-1 flex items-center gap-2 hover:text-primary truncate text-left">
-                        <FolderOpen className="h-3.5 w-3.5 shrink-0" /><span className="truncate">{tmpl.name}</span>
-                      </button>
-                      <Badge variant="outline" className="text-[10px] shrink-0">{tmpl.formation}</Badge>
-                      <button onClick={() => deleteTemplate(tmpl.id)} className="opacity-40 hover:opacity-100 shrink-0"><Trash2 className="h-3 w-3" /></button>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-            )}
+        {templates.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground">
+            <Users className="h-10 w-10 mx-auto mb-3 opacity-20" />
+            <p className="text-sm">暂无阵容模板，点击「新建阵容」开始</p>
+            <Link href="/lineup/new/">
+              <Button variant="outline" size="sm" className="mt-3"><Plus className="h-4 w-4 mr-1" />新建阵容</Button>
+            </Link>
           </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
+            {templates.map((tmpl) => {
+              const playerCount = guessPlayerCount(tmpl.formation);
+              return (
+                <motion.div
+                  key={tmpl.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Link href={`/lineup/detail/?id=${tmpl.id}`}>
+                    <Card className="cursor-pointer hover:border-primary/30 hover:shadow-md transition-all group">
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-3">
+                          <div>
+                            <h3 className="font-semibold text-sm truncate">{tmpl.name}</h3>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <Badge variant="secondary" className="text-[10px]">{tmpl.formation}</Badge>
+                              {playerCount != null && (
+                                <span className="text-[10px] text-muted-foreground">{playerCount}人制</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(tmpl.id, tmpl.name); }}
+                              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
 
-          {/* 右侧球场 */}
-          <div className="flex-1 flex justify-center">
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative" style={{ width: PITCH_W, height: PITCH_H }}>
-              <PitchSvg width={PITCH_W} height={PITCH_H} />
-              {formationPositions.map((fp, idx) => {
-                const playerId = starters.get(idx);
-                const player = playerId ? players.find((p) => p.id === playerId) : null;
-                const x = (fp.x / 100) * PITCH_W;
-                const y = (fp.y / 100) * PITCH_H;
-                const isSelected = selectedIndex === idx;
-                return (
-                  <motion.div key={idx} initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }} className="absolute flex flex-col items-center" style={{ left: x, top: y, transform: "translate(-50%, -50%)" }}>
-                    <div
-                      onClick={() => handlePositionClick(idx)}
-                      className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold cursor-pointer shadow-md transition-all ${
-                        isSelected ? "bg-yellow-400 text-black ring-2 ring-yellow-300 scale-110" : player ? "bg-white text-gray-900 ring-2 ring-white/50" : "bg-white/70 text-gray-500 border border-dashed border-white/50"
-                      }`}
-                    >
-                      {player ? player.number : fp.position}
-                    </div>
-                    {player && <span className="text-[9px] text-white font-medium mt-0.5 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] truncate max-w-16 text-center">{player.name}</span>}
-                  </motion.div>
-                );
-              })}
-            </motion.div>
+                        {/* 首发预览 */}
+                        <div className="flex flex-wrap gap-1">
+                          {tmpl.starters.slice(0, 6).map((s) => (
+                            <span key={s.playerId} className="inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              {s.position}
+                            </span>
+                          ))}
+                          {tmpl.starters.length > 6 && (
+                            <span className="text-[10px] text-muted-foreground px-1">+{tmpl.starters.length - 6}</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
+                          <Users className="h-3 w-3" />
+                          {tmpl.starters.length}首发{tmpl.substitutes.length > 0 && ` · ${tmpl.substitutes.length}替补`}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              );
+            })}
           </div>
-        </div>
+        )}
       </div>
     </PageTransition>
   );

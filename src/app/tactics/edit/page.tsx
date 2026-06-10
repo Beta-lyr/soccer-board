@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools } from "@/components/tactics/drawing-tools";
-import { FORMATIONS, FORMATION_LIST, type TacticType } from "@/types";
+import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, type TacticType } from "@/types";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -51,6 +51,7 @@ function EditTacticContent() {
 
   const [name, setName] = useState("");
   const [tacticType, setTacticType] = useState<TacticType>("open_play");
+  const [playerCount, setPlayerCount] = useState<number>(11);
   const [formation, setFormation] = useState("4-4-2");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -162,7 +163,7 @@ function EditTacticContent() {
                 <SelectContent>{TACTIC_TYPES.map((tt) => <SelectItem key={tt.value} value={tt.value}>{t(tt.key)}</SelectItem>)}</SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>{t("tactics.formation")}</Label><FormationPicker value={formation} onChange={setFormation} /></div>
+            <div className="space-y-2"><Label>{t("tactics.formation")}</Label><FormationPicker value={formation} onChange={setFormation} playerCount={playerCount} onPlayerCountChange={setPlayerCount} /></div>
             <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
               <p className="font-medium text-sm">{t("tactics.tips")}</p>
               <p className="text-muted-foreground">• {t("tactics.tipMove")}</p>

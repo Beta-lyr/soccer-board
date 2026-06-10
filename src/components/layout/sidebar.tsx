@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   LogOut,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
@@ -35,6 +36,7 @@ export function Sidebar() {
     { href: "/players/", label: t("common.players"), icon: Users },
     { href: "/lineup/", label: t("common.lineup"), icon: LayoutList },
     { href: "/matches/", label: t("common.matches"), icon: Trophy },
+    { href: "/competitions/", label: "赛事", icon: Award },
     { href: "/stats/", label: t("common.stats"), icon: BarChart3 },
     { href: "/training/", label: t("common.training"), icon: Dumbbell },
     { href: "/calendar/", label: t("common.calendar"), icon: Calendar },

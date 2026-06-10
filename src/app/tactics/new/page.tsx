@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools } from "@/components/tactics/drawing-tools";
-import { FORMATIONS, FORMATION_LIST, type TacticType } from "@/types";
+import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, getFormationsForPlayerCount, PLAYER_COUNTS, type TacticType } from "@/types";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
 import { db } from "@/lib/db";
@@ -40,6 +40,15 @@ const TACTIC_TYPES: { value: TacticType; key: string }[] = [
   { value: "throw_in", key: "tactics.throwIn" },
 ];
 
+/** 根据阵型名推断人数 */
+function guessPlayerCount(formation: string): number {
+  for (const [countStr, group] of Object.entries(FORMATION_GROUPS)) {
+    if (formation in group) return Number(countStr);
+  }
+  const positions = FORMATIONS[formation];
+  return positions?.length ?? 11;
+}
+
 const CANVAS_W = 600;
 const CANVAS_H = 750;
 
@@ -47,6 +56,7 @@ export default function NewTacticPage() {
   const { t } = useI18n();
   const [name, setName] = useState("");
   const [tacticType, setTacticType] = useState<TacticType>("open_play");
+  const [playerCount, setPlayerCount] = useState<number>(11);
   const [formation, setFormation] = useState("4-4-2");
   const [saving, setSaving] = useState(false);
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
@@ -159,7 +169,7 @@ export default function NewTacticPage() {
             </div>
             <div className="space-y-2">
               <Label>{t("tactics.formation")}</Label>
-              <FormationPicker value={formation} onChange={setFormation} />
+              <FormationPicker value={formation} onChange={setFormation} playerCount={playerCount} onPlayerCountChange={setPlayerCount} />
             </div>
             <div className="p-3 bg-muted rounded-lg text-xs space-y-1">
               <p className="font-medium text-sm">{t("tactics.tips")}</p>
