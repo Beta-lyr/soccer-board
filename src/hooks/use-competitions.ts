@@ -44,7 +44,6 @@ export function generateRoundRobinSchedule(teams: string[]): [string, string][] 
   const n = teams.length;
   if (n < 2) return [];
 
-  // 奇数队加一个 bye
   const list = n % 2 === 0 ? [...teams] : [...teams, "BYE"];
   const count = list.length;
   const rounds: [string, string][] = [];
@@ -57,12 +56,37 @@ export function generateRoundRobinSchedule(teams: string[]): [string, string][] 
         rounds.push([home, away]);
       }
     }
-    // 轮转：固定第一个，其余右移
     const last = list.pop()!;
     list.splice(1, 0, last);
   }
 
   return rounds;
+}
+
+/** 生成多循环赛程（双循环=主客各一次） */
+export function generateMultiRoundRobinSchedule(teams: string[], rounds: number): { home: string; away: string; round: number }[] {
+  const single = generateRoundRobinSchedule(teams);
+  const result: { home: string; away: string; round: number }[] = [];
+  for (let r = 0; r < rounds; r++) {
+    for (const [home, away] of single) {
+      // 第二轮主客互换
+      result.push(r % 2 === 0 ? { home, away, round: r + 1 } : { home: away, away: home, round: r + 1 });
+    }
+  }
+  return result;
+}
+
+/** 随机分组 */
+export function generateGroups(teams: string[], groupCount: number): { name: string; teams: string[] }[] {
+  const shuffled = [...teams].sort(() => Math.random() - 0.5);
+  const groups: { name: string; teams: string[] }[] = [];
+  for (let i = 0; i < groupCount; i++) {
+    groups.push({ name: `${String.fromCharCode(65 + i)}组`, teams: [] });
+  }
+  shuffled.forEach((team, idx) => {
+    groups[idx % groupCount].teams.push(team);
+  });
+  return groups;
 }
 
 /** 淘汰制配对 */

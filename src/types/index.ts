@@ -82,8 +82,8 @@ export type MatchScope = "internal" | "external"; // 校内 | 校外
 
 // ============ 赛事（杯赛/联赛） ============
 
-export type CompetitionType = "league" | "cup";
-export type CompetitionFormat = "round_robin" | "knockout";
+export type CompetitionType = "league" | "cup" | "friendly";
+export type CompetitionFormat = "round_robin" | "knockout" | "group_knockout";
 
 export interface Standing {
   team: string;
@@ -96,6 +96,12 @@ export interface Standing {
   points: number;
 }
 
+export interface CompetitionGroup {
+  name: string;           // 组名（如"A组"）
+  teams: string[];
+  standings?: Standing[];
+}
+
 export interface Competition {
   id: string;
   name: string;
@@ -105,6 +111,8 @@ export interface Competition {
   matchIds: string[];
   standings?: Standing[];
   currentRound: number;        // 杯赛当前轮次
+  rounds?: number;             // 联赛循环次数（1=单循环, 2=双循环）
+  groups?: CompetitionGroup[]; // 杯赛小组赛分组
   createdAt: string;
   updatedAt: string;
 }
