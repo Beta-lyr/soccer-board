@@ -63,15 +63,25 @@ export function AvatarUpload({ avatarKey, fallback, onUpload, onRemove, classNam
 
   const handleFile = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) return;
-    if (file.size > 5 * 1024 * 1024) return; // pre-check before compress
+    if (file.size > 5 * 1024 * 1024) return;
 
     setUploading(true);
     try {
       const compressed = await compressImage(file);
-      const formData = new FormData();
-      formData.append("file", compressed, "avatar.jpg");
 
-      const res = await fetch("/api/avatar/upload", { method: "POST", body: formData });
+      // Read blob as base64
+      const reader = new FileReader();
+      const base64: string = await new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(compressed);
+      });
+
+      const res = await fetch("/api/avatar/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: base64, type: "image/jpeg" }),
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || `Upload failed: ${res.status}`);

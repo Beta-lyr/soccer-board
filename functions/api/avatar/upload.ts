@@ -33,58 +33,56 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     );
   }
 
-  const contentType = request.headers.get("Content-Type") ?? "";
-  if (!contentType.includes("multipart/form-data")) {
+  const body = (await request.json().catch(() => null)) as {
+    data?: string;
+    type?: string;
+  } | null;
+
+  if (!body?.data || !body?.type) {
     return Response.json(
-      { error: "Expected multipart/form-data" },
+      { error: "Missing data or type field" },
       { status: 400, headers }
     );
   }
 
-  const formData = await request.formData();
-  const file = formData.get("file");
-
-  if (!file || typeof file === "string") {
+  if (!ALLOWED_TYPES.includes(body.type)) {
     return Response.json(
-      { error: "No file provided" },
+      { error: `Invalid file type: ${body.type}. Allowed: JPEG, PNG, WebP, GIF` },
       { status: 400, headers }
     );
   }
 
-  const imageFile = file as File;
+  // Decode base64 to Uint8Array
+  const base64Data = body.data.includes(",") ? body.data.split(",")[1] : body.data;
+  const binaryStr = atob(base64Data);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
 
-  if (imageFile.size === 0) {
+  if (bytes.length === 0) {
     return Response.json(
       { error: "Empty file" },
       { status: 400, headers }
     );
   }
 
-  const fileType = imageFile.type || "image/jpeg";
-  if (!ALLOWED_TYPES.includes(fileType)) {
+  if (bytes.length > MAX_SIZE) {
     return Response.json(
-      { error: `Invalid file type: ${fileType}. Allowed: JPEG, PNG, WebP, GIF` },
+      { error: `File too large: ${(bytes.length / 1024 / 1024).toFixed(1)}MB. Max: 2MB` },
       { status: 400, headers }
     );
   }
 
-  if (imageFile.size > MAX_SIZE) {
-    return Response.json(
-      { error: `File too large: ${(imageFile.size / 1024 / 1024).toFixed(1)}MB. Max: 2MB` },
-      { status: 400, headers }
-    );
-  }
-
-  const ext = fileType.split("/")[1] || "jpg";
+  const ext = body.type.split("/")[1] || "jpg";
   const key = `avatars/${crypto.randomUUID()}.${ext}`;
 
-  await env.AVATAR_BUCKET.put(key, imageFile, {
+  await env.AVATAR_BUCKET.put(key, bytes, {
     httpMetadata: {
-      contentType: imageFile.type,
+      contentType: body.type,
       cacheControl: "public, max-age=31536000, immutable",
     },
   });
 
-  // Return key; client uses /api/avatar/serve?key=... to load image
   return Response.json({ key }, { headers });
 }
