@@ -6,7 +6,7 @@ import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/players/status-badge";
 import { PlayerForm } from "@/components/players/player-form";
 import { usePlayers } from "@/hooks/use-players";
@@ -86,6 +86,12 @@ export default function PlayersPage() {
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                            {player.avatar && (
+                              <AvatarImage
+                                src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`}
+                                alt={player.name}
+                              />
+                            )}
                             <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
                               {player.number}
                             </AvatarFallback>
