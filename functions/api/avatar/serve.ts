@@ -7,7 +7,7 @@ export async function onRequest(context: { request: Request; env: Env }) {
   const url = new URL(request.url);
   const key = url.searchParams.get("key");
 
-  if (!key || !key.startsWith("avatars/")) {
+  if (!key || !key.startsWith("soccer-board/avatars/")) {
     return new Response("Missing or invalid key", { status: 400 });
   }
 

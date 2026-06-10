@@ -30,8 +30,9 @@ export async function onRequest(context: any) {
   const url = new URL(request.url);
   const pathname = url.pathname;
 
-  // Skip auth for login page, API auth routes, and static assets
+  // Skip auth for landing page, login page, API auth routes, and static assets
   if (
+    pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/api/auth") ||
     pathname.startsWith("/api/avatar") ||

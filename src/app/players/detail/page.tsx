@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/players/status-badge";
 import { AbilityRadar } from "@/components/players/ability-radar";
 import { PlayerForm } from "@/components/players/player-form";
@@ -27,6 +27,7 @@ function PlayerDetailContent() {
   const id = searchParams.get("id");
   const [player, setPlayer] = useState<Player | null>(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [showZoom, setShowZoom] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -91,10 +92,22 @@ function PlayerDetailContent() {
             <CardContent className="p-4 md:p-6">
               <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}>
-                  <Avatar className="h-16 w-16 sm:h-20 sm:w-20 ring-4 ring-primary/10">
-                    {player.avatar && <AvatarImage src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`} />}
-                    <AvatarFallback className="text-2xl sm:text-3xl font-black bg-primary text-primary-foreground">{player.number}</AvatarFallback>
-                  </Avatar>
+                  <div
+                    className="h-16 w-16 sm:h-20 sm:w-20 rounded-full overflow-hidden ring-4 ring-primary/10 cursor-pointer hover:ring-primary/30 transition-all"
+                    onClick={() => player.avatar && setShowZoom(true)}
+                  >
+                    {player.avatar ? (
+                      <img
+                        src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`}
+                        alt={player.name}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground text-2xl sm:text-3xl font-black">
+                        {player.number}
+                      </div>
+                    )}
+                  </div>
                 </motion.div>
                 <div className="flex-1 space-y-2">
                   <div className="flex items-center gap-3">
@@ -142,6 +155,16 @@ function PlayerDetailContent() {
       </div>
 
       <PlayerForm open={showEdit} onOpenChange={setShowEdit} initialData={player} onSubmit={handleUpdate} />
+
+      <Dialog open={showZoom} onOpenChange={setShowZoom}>
+        <DialogContent className="max-w-md p-2 bg-transparent border-0 shadow-none">
+          <img
+            src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar ?? "")}`}
+            alt={player.name}
+            className="w-full rounded-lg"
+          />
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect, useRef } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/lib/i18n";
 import { db } from "@/lib/db";
+import { useMatchTimer } from "@/hooks/use-match-timer";
 import type { Match, MatchEventType, Player } from "@/types";
 import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
@@ -30,32 +31,21 @@ function MatchDetailContent() {
   const { t } = useI18n();
   const [match, setMatch] = useState<Match | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [minute, setMinute] = useState(0);
-  const [isRunning, setIsRunning] = useState(false);
   const [selectedType, setSelectedType] = useState<MatchEventType | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [relatedPlayer, setRelatedPlayer] = useState<string>("");
   const [note, setNote] = useState("");
   const [homeScore, setHomeScore] = useState(0);
   const [awayScore, setAwayScore] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const timer = useMatchTimer(id || "");
 
   useEffect(() => {
     if (id) {
       db.matches.get(id).then((m) => m && setMatch(m));
       db.players.toArray().then(setPlayers);
     }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [id]);
-
-  useEffect(() => {
-    if (isRunning) {
-      timerRef.current = setInterval(() => setMinute((m) => m + 1), 60000); // 1分钟模拟
-    } else if (timerRef.current) {
-      clearInterval(timerRef.current);
-    }
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [isRunning]);
 
   if (!id || !match) {
     return (
@@ -74,7 +64,7 @@ function MatchDetailContent() {
       id: crypto.randomUUID(),
       matchId: id,
       type: selectedType,
-      minute,
+      minute: timer.minute,
       playerId: selectedPlayer,
       relatedPlayerId: relatedPlayer || undefined,
       note: note || undefined,
@@ -100,7 +90,7 @@ function MatchDetailContent() {
     });
     const updated = await db.matches.get(id);
     if (updated) setMatch(updated);
-    setIsRunning(false);
+    timer.reset();
   };
 
   const getPlayerName = (pid: string) => players.find((p) => p.id === pid)?.name ?? "未知";
@@ -174,13 +164,13 @@ function MatchDetailContent() {
                 {/* 计时器 */}
                 <div className="flex items-center justify-center gap-4">
                   <div className="text-5xl font-black tabular-nums w-32 text-center">
-                    {String(minute).padStart(2, "0")}:00
+                    {String(timer.minute).padStart(2, "0")}:00
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" variant={isRunning ? "destructive" : "default"} onClick={() => setIsRunning(!isRunning)}>
-                      {isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                    <Button size="sm" variant={timer.isRunning ? "destructive" : "default"} onClick={() => timer.isRunning ? timer.pause() : timer.start()}>
+                      {timer.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                     </Button>
-                    <Button size="sm" variant="outline" onClick={() => { setMinute(0); setIsRunning(false); }}>
+                    <Button size="sm" variant="outline" onClick={timer.reset}>
                       <RotateCcw className="h-4 w-4" />
                     </Button>
                   </div>

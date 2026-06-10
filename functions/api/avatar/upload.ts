@@ -75,7 +75,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   }
 
   const ext = body.type.split("/")[1] || "jpg";
-  const key = `avatars/${crypto.randomUUID()}.${ext}`;
+  const key = `soccer-board/avatars/${crypto.randomUUID()}.${ext}`;
 
   await env.AVATAR_BUCKET.put(key, bytes, {
     httpMetadata: {

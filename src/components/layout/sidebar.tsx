@@ -33,7 +33,7 @@ export function Sidebar() {
   };
 
   const NAV_ITEMS = [
-    { href: "/", label: t("common.dashboard"), icon: LayoutDashboard },
+    { href: "/dashboard/", label: t("common.dashboard"), icon: LayoutDashboard },
     { href: "/tactics/", label: t("common.tactics"), icon: Swords },
     { href: "/players/", label: t("common.players"), icon: Users },
     { href: "/lineup/", label: t("common.lineup"), icon: LayoutList },
@@ -50,10 +50,7 @@ export function Sidebar() {
       </p>
       <ul className="space-y-0.5">
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            item.href === "/"
-              ? pathname === "/"
-              : pathname.startsWith(item.href.replace(/\/$/, ""));
+          const isActive = pathname.startsWith(item.href.replace(/\/$/, ""));
           return (
             <li key={item.href}>
               <Link

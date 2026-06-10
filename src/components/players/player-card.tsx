@@ -1,6 +1,5 @@
 "use client";
 
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "./status-badge";
 import { useI18n } from "@/lib/i18n";
 import type { Player } from "@/types";
@@ -20,12 +19,19 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
       onClick={onClick}
     >
       <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
-          {player.avatar && <AvatarImage src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`} />}
-          <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
-            {player.number}
-          </AvatarFallback>
-        </Avatar>
+        <div className="h-12 w-12 rounded-full overflow-hidden ring-2 ring-primary/20 flex-shrink-0">
+          {player.avatar ? (
+            <img
+              src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`}
+              alt={player.name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-primary text-primary-foreground text-lg font-black">
+              {player.number}
+            </div>
+          )}
+        </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-semibold truncate">{player.name}</span>

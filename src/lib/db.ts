@@ -7,12 +7,20 @@ import type {
   Training,
 } from "@/types";
 
+export interface MatchTimerState {
+  matchId: string;
+  startedAt: number;
+  pausedElapsed: number;
+  isRunning: boolean;
+}
+
 class SoccerDB extends Dexie {
   players!: Table<Player>;
   tactics!: Table<Tactic>;
   lineupTemplates!: Table<LineupTemplate>;
   matches!: Table<Match>;
   trainings!: Table<Training>;
+  matchTimers!: Table<MatchTimerState>;
 
   constructor() {
     super("soccer-board");
@@ -29,6 +37,14 @@ class SoccerDB extends Dexie {
       lineupTemplates: "id, name, formation, createdAt",
       matches: "id, date, opponent, status, type, createdAt",
       trainings: "id, date, theme, createdAt",
+    });
+    this.version(3).stores({
+      players: "id, name, number, status, createdAt",
+      tactics: "id, name, type, formation, createdAt",
+      lineupTemplates: "id, name, formation, createdAt",
+      matches: "id, date, opponent, status, type, createdAt",
+      trainings: "id, date, theme, createdAt",
+      matchTimers: "matchId",
     });
   }
 }
