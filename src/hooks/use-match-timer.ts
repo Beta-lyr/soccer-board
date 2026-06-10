@@ -1,20 +1,19 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { db } from "@/lib/db";
-import type { MatchTimerState } from "@/lib/db";
 
-const DEFAULT: Omit<MatchTimerState, "matchId"> = {
-  startedAt: 0,
-  pausedElapsed: 0,
-  isRunning: false,
-};
+interface TimerState {
+  startedAt: number;
+  pausedElapsed: number;
+  isRunning: boolean;
+}
 
-function getElapsed(state: MatchTimerState): number {
+const STORAGE_KEY = "match-timer-";
+const DEFAULT: TimerState = { startedAt: 0, pausedElapsed: 0, isRunning: false };
+
+function getElapsed(state: TimerState): number {
   const base = state.pausedElapsed;
-  if (state.isRunning && state.startedAt > 0) {
-    return base + (Date.now() - state.startedAt);
-  }
+  if (state.isRunning && state.startedAt > 0) return base + (Date.now() - state.startedAt);
   return base;
 }
 
@@ -25,64 +24,41 @@ function formatTime(ms: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+function loadState(matchId: string): TimerState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY + matchId);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore */ }
+  return DEFAULT;
+}
+
+function saveState(matchId: string, state: TimerState) {
+  localStorage.setItem(STORAGE_KEY + matchId, JSON.stringify(state));
+}
+
 export function useMatchTimer(matchId: string) {
-  const [state, setState] = useState<MatchTimerState>({ matchId, ...DEFAULT });
-  const [elapsed, setElapsed] = useState(0);
+  const [state, setState] = useState<TimerState>(() => loadState(matchId));
+  const [elapsed, setElapsed] = useState(() => getElapsed(loadState(matchId)));
   const stateRef = useRef(state);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   stateRef.current = state;
 
-  // Load from IndexedDB
-  useEffect(() => {
-    if (!matchId) return;
-    let cancelled = false;
-    db.matchTimers.get(matchId).then((saved) => {
-      if (cancelled || !saved) return;
-      setState(saved);
-      setElapsed(getElapsed(saved));
-    });
-    return () => { cancelled = true; };
-  }, [matchId]);
-
-  // Tick every second
   useEffect(() => {
     if (state.isRunning) {
-      tickRef.current = setInterval(() => {
-        setElapsed(getElapsed(stateRef.current));
-      }, 1000);
+      tickRef.current = setInterval(() => setElapsed(getElapsed(stateRef.current)), 1000);
     }
-    return () => {
-      if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; }
-    };
+    return () => { if (tickRef.current) { clearInterval(tickRef.current); tickRef.current = null; } };
   }, [state.isRunning]);
 
-  const save = useCallback(async (next: MatchTimerState) => {
+  const save = useCallback((next: TimerState) => {
     setState(next);
-    await db.matchTimers.put(next);
-  }, []);
+    saveState(matchId, next);
+  }, [matchId]);
 
-  const start = useCallback(async () => {
-    const current = stateRef.current;
-    await save({ ...current, startedAt: Date.now(), isRunning: true });
-  }, [save]);
+  const start = useCallback(() => save({ ...stateRef.current, startedAt: Date.now(), isRunning: true }), [save]);
+  const pause = useCallback(() => save({ ...stateRef.current, pausedElapsed: getElapsed(stateRef.current), startedAt: 0, isRunning: false }), [save]);
+  const reset = useCallback(() => { if (tickRef.current) clearInterval(tickRef.current); save({ ...DEFAULT }); setElapsed(0); }, [save]);
 
-  const pause = useCallback(async () => {
-    const current = stateRef.current;
-    const e = getElapsed(current);
-    await save({ ...current, pausedElapsed: e, startedAt: 0, isRunning: false });
-  }, [save]);
-
-  const reset = useCallback(async () => {
-    if (tickRef.current) clearInterval(tickRef.current);
-    await save({ matchId, ...DEFAULT });
-    setElapsed(0);
-  }, [matchId, save]);
-
-  return {
-    displayTime: formatTime(elapsed),
-    minute: Math.floor(elapsed / 60000),
-    isRunning: state.isRunning,
-    start, pause, reset,
-  };
+  return { displayTime: formatTime(elapsed), minute: Math.floor(elapsed / 60000), isRunning: state.isRunning, start, pause, reset };
 }

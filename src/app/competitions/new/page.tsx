@@ -16,8 +16,11 @@ import { ArrowLeft, Trophy, Swords, Users, Handshake } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import { db } from "@/lib/db";
-import type { CompetitionGroup } from "@/types";
+import { createApiClient } from "@/lib/api";
+import type { Match, CompetitionGroup } from "@/types";
+
+const matchesApi = createApiClient<Match>("matches");
+const playersApi = createApiClient<import("@/types").Player>("players");
 
 const COMP_TYPES = [
   { value: "league" as const, label: "联赛", desc: "积分制，支持单/双循环", icon: Trophy, color: "border-amber-500/50 bg-amber-500/5" },
@@ -78,24 +81,21 @@ export default function NewCompetitionPage() {
     const homeTeam = selectedTeams.find((t) => (t.shortName ?? t.name) === home);
     const awayTeam = selectedTeams.find((t) => (t.shortName ?? t.name) === away);
     const hLineup = homeTeam ? (await Promise.all(homeTeam.playerIds.map(async (pid) => {
-      const p = await db.players.get(pid);
+      const p = await playersApi.get(pid);
       return p ? { playerId: pid, playerName: p.name, position: p.positions[0] ?? "" } : null;
     }))).filter(Boolean) : [];
     const aLineup = awayTeam ? (await Promise.all(awayTeam.playerIds.map(async (pid) => {
-      const p = await db.players.get(pid);
+      const p = await playersApi.get(pid);
       return p ? { playerId: pid, playerName: p.name, position: p.positions[0] ?? "" } : null;
     }))).filter(Boolean) : [];
 
-    const matchId = crypto.randomUUID();
-    const now = new Date().toISOString();
-    await db.matches.add({
-      id: matchId, date: dateTime, venue: defaultVenue, type, scope: "internal",
+    const matchId = await matchesApi.add({
+      date: dateTime, venue: defaultVenue, type, scope: "internal",
       homeTeam: home, awayTeam: away, opponent: away,
       homeLineup: hLineup as NonNullable<typeof hLineup[number]>[],
       awayLineup: aLineup as NonNullable<typeof aLineup[number]>[],
       lineup: hLineup.filter((p) => p?.playerId).map((p) => ({ playerId: p!.playerId!, position: p!.position })),
       status: "upcoming", events: [], ratings: [], competitionId: undefined, round,
-      createdAt: now, updatedAt: now,
     });
     return matchId;
   };
@@ -165,7 +165,7 @@ export default function NewCompetitionPage() {
 
       // 回填 competitionId
       for (const mid of matchIds) {
-        await db.matches.update(mid, { competitionId: compId as string });
+        await matchesApi.update(mid, { competitionId: compId as string });
       }
 
       toast.success(`赛事已创建${autoGenerate ? `，共 ${matchIds.length} 场比赛` : ""}`);

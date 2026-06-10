@@ -7,12 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { db } from "@/lib/db";
+import { useTactics } from "@/hooks/use-tactics";
 import { Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
-import { useLiveQuery } from "dexie-react-hooks";
 import { toast } from "sonner";
 
 const TYPE_KEYS: Record<string, string> = {
@@ -24,12 +23,12 @@ const TYPE_KEYS: Record<string, string> = {
 
 export default function TacticsPage() {
   const { t } = useI18n();
-  const tactics = useLiveQuery(() => db.tactics.orderBy("createdAt").reverse().toArray()) ?? [];
+  const { tactics, deleteTactic } = useTactics();
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const handleDelete = async () => {
     if (!deleteId) return;
-    await db.tactics.delete(deleteId);
+    await deleteTactic(deleteId);
     setDeleteId(null);
     toast.success("已删除");
   };

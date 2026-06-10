@@ -1,17 +1,16 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useCallback } from "react";
+import { createApiClient } from "@/lib/api";
+import { useApiQuery } from "./use-api-query";
 import type { Player, PlayerAbilities, PlayerStatus, PreferredFoot } from "@/types";
 
-function generateId() {
-  return crypto.randomUUID();
-}
+const api = createApiClient<Player>("players");
 
 export function usePlayers() {
-  const players = useLiveQuery(() => db.players.orderBy("number").toArray()) ?? [];
+  const players = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
 
-  const addPlayer = async (data: {
+  const addPlayer = useCallback(async (data: {
     name: string;
     number: number;
     height?: number;
@@ -22,34 +21,25 @@ export function usePlayers() {
     abilities: PlayerAbilities;
     avatar?: string;
   }) => {
-    const now = new Date().toISOString();
-    await db.players.add({
-      id: generateId(),
-      ...data,
-      createdAt: now,
-      updatedAt: now,
-    });
-  };
+    await api.add(data as Omit<Player, "id" | "createdAt" | "updatedAt">);
+  }, []);
 
-  const updatePlayer = async (id: string, data: Partial<Omit<Player, "id" | "createdAt">>) => {
-    await db.players.update(id, {
-      ...data,
-      updatedAt: new Date().toISOString(),
-    });
-  };
+  const updatePlayer = useCallback(async (id: string, data: Partial<Omit<Player, "id" | "createdAt">>) => {
+    await api.update(id, data);
+  }, []);
 
-  const deletePlayer = async (id: string) => {
-    await db.players.delete(id);
-  };
+  const deletePlayer = useCallback(async (id: string) => {
+    await api.remove(id);
+  }, []);
 
-  const getPlayer = async (id: string) => {
-    return db.players.get(id);
-  };
+  const getPlayer = useCallback(async (id: string) => {
+    return api.get(id);
+  }, []);
 
   return { players, addPlayer, updatePlayer, deletePlayer, getPlayer };
 }
 
 export function usePlayer(id: string) {
-  const player = useLiveQuery(() => db.players.get(id), [id]);
+  const player = useApiQuery(() => api.get(id), [id]);
   return player;
 }

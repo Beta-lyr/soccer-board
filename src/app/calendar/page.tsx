@@ -7,8 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/lib/i18n";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useMatches } from "@/hooks/use-matches";
+import { useTrainings } from "@/hooks/use-trainings";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -18,8 +18,8 @@ const WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 export default function CalendarPage() {
   const { t } = useI18n();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const matches = useLiveQuery(() => db.matches.toArray()) ?? [];
-  const trainings = useLiveQuery(() => db.trainings.toArray()) ?? [];
+  const { matches } = useMatches();
+  const { trainings } = useTrainings();
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();

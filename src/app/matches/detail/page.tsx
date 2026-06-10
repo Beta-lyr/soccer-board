@@ -10,9 +10,12 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/lib/i18n";
-import { db } from "@/lib/db";
+import { createApiClient } from "@/lib/api";
 import { useMatchTimer } from "@/hooks/use-match-timer";
+import { usePlayers } from "@/hooks/use-players";
 import type { Match, MatchEventType, Player } from "@/types";
+
+const matchesApi = createApiClient<Match>("matches");
 import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -29,7 +32,7 @@ function MatchDetailContent() {
   const id = searchParams.get("id");
   const { t } = useI18n();
   const [match, setMatch] = useState<Match | null>(null);
-  const [players, setPlayers] = useState<Player[]>([]);
+  const { players } = usePlayers();
   const [selectedType, setSelectedType] = useState<MatchEventType | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [relatedPlayer, setRelatedPlayer] = useState<string>("");
@@ -41,8 +44,7 @@ function MatchDetailContent() {
 
   useEffect(() => {
     if (id) {
-      db.matches.get(id).then((m) => m && setMatch(m));
-      db.players.toArray().then(setPlayers);
+      matchesApi.get(id).then((m) => m && setMatch(m));
     }
   }, [id]);
 
@@ -69,11 +71,8 @@ function MatchDetailContent() {
       note: note || undefined,
       timestamp: new Date().toISOString(),
     };
-    await db.matches.update(id, {
-      events: [...match.events, newEvent],
-      updatedAt: new Date().toISOString(),
-    });
-    const updated = await db.matches.get(id);
+    await matchesApi.update(id, { events: [...match.events, newEvent] });
+    const updated = await matchesApi.get(id);
     if (updated) setMatch(updated);
     setSelectedType(null);
     setSelectedPlayer("");
@@ -82,12 +81,8 @@ function MatchDetailContent() {
   };
 
   const handleFinish = async () => {
-    await db.matches.update(id, {
-      status: "finished",
-      score: { home: homeScore, away: awayScore },
-      updatedAt: new Date().toISOString(),
-    });
-    const updated = await db.matches.get(id);
+    await matchesApi.update(id, { status: "finished", score: { home: homeScore, away: awayScore } });
+    const updated = await matchesApi.get(id);
     if (updated) setMatch(updated);
     timer.reset();
   };
@@ -118,8 +113,8 @@ function MatchDetailContent() {
                 size="sm"
                 onClick={async () => {
                   if (match.status === "upcoming") {
-                    await db.matches.update(id, { status: "live" });
-                    const updated = await db.matches.get(id);
+                    await matchesApi.update(id, { status: "live" });
+                    const updated = await matchesApi.get(id);
                     if (updated) setMatch(updated);
                   }
                 }}
@@ -378,8 +373,8 @@ function MatchDetailContent() {
                           if (isNaN(score) || score < 1 || score > 10) return;
                           const newRatings = match.ratings.filter((r) => r.playerId !== p.id);
                           newRatings.push({ playerId: p.id, score });
-                          await db.matches.update(id, { ratings: newRatings });
-                          const updated = await db.matches.get(id);
+                          await matchesApi.update(id, { ratings: newRatings });
+                          const updated = await matchesApi.get(id);
                           if (updated) setMatch(updated);
                         }}
                         placeholder="-"

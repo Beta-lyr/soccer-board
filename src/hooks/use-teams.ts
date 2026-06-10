@@ -1,33 +1,30 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useCallback } from "react";
+import { createApiClient } from "@/lib/api";
+import { useApiQuery } from "./use-api-query";
 import type { Team } from "@/types";
 
+const api = createApiClient<Team>("teams");
+
 export function useTeams() {
-  const teams = useLiveQuery(() => db.teams.orderBy("createdAt").reverse().toArray()) ?? [];
+  const teams = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
 
-  const addTeam = async (data: Omit<Team, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
-    return db.teams.add({
-      id: crypto.randomUUID(),
-      ...data,
-      createdAt: now,
-      updatedAt: now,
-    });
-  };
+  const addTeam = useCallback(async (data: Omit<Team, "id" | "createdAt" | "updatedAt">) => {
+    return api.add(data);
+  }, []);
 
-  const updateTeam = async (id: string, data: Partial<Omit<Team, "id" | "createdAt">>) => {
-    await db.teams.update(id, { ...data, updatedAt: new Date().toISOString() });
-  };
+  const updateTeam = useCallback(async (id: string, data: Partial<Omit<Team, "id" | "createdAt">>) => {
+    await api.update(id, data);
+  }, []);
 
-  const deleteTeam = async (id: string) => {
-    await db.teams.delete(id);
-  };
+  const deleteTeam = useCallback(async (id: string) => {
+    await api.remove(id);
+  }, []);
 
   return { teams, addTeam, updateTeam, deleteTeam };
 }
 
 export function useTeam(id: string) {
-  return useLiveQuery(() => db.teams.get(id), [id]);
+  return useApiQuery(() => api.get(id), [id]);
 }

@@ -10,16 +10,20 @@ import { Trophy, Users, Swords, Calendar, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { usePlayers } from "@/hooks/use-players";
+import { useTactics } from "@/hooks/use-tactics";
+import { useMatches } from "@/hooks/use-matches";
 
 export default function DashboardPage() {
   const { t } = useI18n();
+  const { players } = usePlayers();
+  const { tactics } = useTactics();
+  const { matches } = useMatches();
 
-  const playerCount = useLiveQuery(() => db.players.count()) ?? 0;
-  const tacticCount = useLiveQuery(() => db.tactics.count()) ?? 0;
-  const matchCount = useLiveQuery(() => db.matches.count()) ?? 0;
-  const trainingCount = useLiveQuery(() => db.trainings.count()) ?? 0;
+  const playerCount = players.length;
+  const tacticCount = tactics.length;
+  const matchCount = matches.length;
+  const trainingCount = 0;
 
   const STATS = [
     { label: t("dashboard.totalPlayers"), value: playerCount, icon: Users, accent: "bg-blue-500/10 text-blue-500" },

@@ -12,11 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools } from "@/components/tactics/drawing-tools";
-import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, type TacticType } from "@/types";
+import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, type TacticType, type Tactic } from "@/types";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { createApiClient } from "@/lib/api";
 import { useI18n } from "@/lib/i18n";
+
+const tacticsApi = createApiClient<Tactic>("tactics");
 import { toast } from "sonner";
 import { useTacticCanvas } from "@/hooks/use-tactic-canvas";
 import { isDrawingArray, type Drawing } from "@/lib/drawing-types";
@@ -72,7 +74,7 @@ function EditTacticContent() {
   // 加载战术数据
   useEffect(() => {
     if (!id) return;
-    db.tactics.get(id).then((tactic) => {
+    tacticsApi.get(id).then((tactic) => {
       if (tactic) {
         setName(tactic.name);
         setTacticType(tactic.type);
@@ -126,7 +128,7 @@ function EditTacticContent() {
           multiplier: 0.5,
         });
       }
-      await db.tactics.update(id, {
+      await tacticsApi.update(id, {
         name, type: tacticType, formation,
         drawings, thumbnail,
         updatedAt: new Date().toISOString(),

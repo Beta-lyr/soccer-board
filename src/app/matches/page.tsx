@@ -10,8 +10,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
 import { useMatches } from "@/hooks/use-matches";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useCompetitions } from "@/hooks/use-competitions";
 import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "未开始", live: "进行中", finished: "已结束" };
@@ -42,8 +41,7 @@ function formatDateTime(dateStr: string): string {
 export default function MatchesPage() {
   const { t } = useI18n();
   const { matches } = useMatches();
-  const competitionsRaw = useLiveQuery(() => db.competitions.toArray());
-  const competitions = useMemo(() => competitionsRaw ?? [], [competitionsRaw]);
+  const { competitions } = useCompetitions();
   const [tab, setTab] = useState<FilterTab>("all");
 
   // 按时间排序（有日期的在前，按日期倒序；无日期的在后）

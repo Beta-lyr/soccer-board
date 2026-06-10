@@ -1,29 +1,26 @@
 "use client";
 
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useCallback } from "react";
+import { createApiClient } from "@/lib/api";
+import { useApiQuery } from "./use-api-query";
 import type { LineupTemplate } from "@/types";
 
+const api = createApiClient<LineupTemplate>("lineupTemplates");
+
 export function useLineupTemplates() {
-  const templates = useLiveQuery(() => db.lineupTemplates.orderBy("createdAt").reverse().toArray()) ?? [];
+  const templates = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
 
-  const addTemplate = async (data: Omit<LineupTemplate, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
-    await db.lineupTemplates.add({
-      id: crypto.randomUUID(),
-      ...data,
-      createdAt: now,
-      updatedAt: now,
-    });
-  };
+  const addTemplate = useCallback(async (data: Omit<LineupTemplate, "id" | "createdAt" | "updatedAt">) => {
+    return api.add(data);
+  }, []);
 
-  const updateTemplate = async (id: string, data: Partial<Omit<LineupTemplate, "id" | "createdAt">>) => {
-    await db.lineupTemplates.update(id, { ...data, updatedAt: new Date().toISOString() });
-  };
+  const updateTemplate = useCallback(async (id: string, data: Partial<Omit<LineupTemplate, "id" | "createdAt">>) => {
+    await api.update(id, data);
+  }, []);
 
-  const deleteTemplate = async (id: string) => {
-    await db.lineupTemplates.delete(id);
-  };
+  const deleteTemplate = useCallback(async (id: string) => {
+    await api.remove(id);
+  }, []);
 
   return { templates, addTemplate, updateTemplate, deleteTemplate };
 }

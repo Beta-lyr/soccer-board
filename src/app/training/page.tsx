@@ -13,8 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/lib/i18n";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { useTrainings } from "@/hooks/use-trainings";
+import { usePlayers } from "@/hooks/use-players";
 import type { TrainingTheme } from "@/types";
 import { Plus, Trash2, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -29,8 +29,8 @@ const THEME_MAP: Record<TrainingTheme, { label: string; color: string }> = {
 
 export default function TrainingPage() {
   const { t } = useI18n();
-  const trainings = useLiveQuery(() => db.trainings.orderBy("date").reverse().toArray()) ?? [];
-  const players = useLiveQuery(() => db.players.orderBy("number").toArray()) ?? [];
+  const { trainings, addTraining, updateTraining, deleteTraining } = useTrainings();
+  const { players } = usePlayers();
   const [showForm, setShowForm] = useState(false);
   const [showAttendance, setShowAttendance] = useState<string | null>(null);
 
@@ -43,12 +43,9 @@ export default function TrainingPage() {
 
   const handleCreate = async () => {
     if (!location) { toast.error("请输入训练地点"); return; }
-    await db.trainings.add({
-      id: crypto.randomUUID(),
+    await addTraining({
       date, time, location, theme, description: description || undefined,
       attendance: players.map((p) => ({ playerId: p.id, present: true })),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
     });
     toast.success("训练已创建");
     setShowForm(false);
@@ -61,17 +58,17 @@ export default function TrainingPage() {
 
   const handleDelete = async (id: string) => {
     if (confirm("确认删除此训练？")) {
-      await db.trainings.delete(id);
+      await deleteTraining(id);
     }
   };
 
   const toggleAttendance = async (trainingId: string, playerId: string) => {
-    const training = await db.trainings.get(trainingId);
+    const training = trainings.find((t) => t.id === trainingId);
     if (!training) return;
     const updated = training.attendance.map((a) =>
       a.playerId === playerId ? { ...a, present: !a.present } : a
     );
-    await db.trainings.update(trainingId, { attendance: updated, updatedAt: new Date().toISOString() });
+    await updateTraining(trainingId, { attendance: updated });
   };
 
   const currentTraining = showAttendance ? trainings.find((tr) => tr.id === showAttendance) : null;

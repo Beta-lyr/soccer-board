@@ -11,8 +11,10 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/players/status-badge";
 import { AbilityRadar } from "@/components/players/ability-radar";
 import { PlayerForm } from "@/components/players/player-form";
-import { db } from "@/lib/db";
+import { createApiClient } from "@/lib/api";
 import type { Player } from "@/types";
+
+const playersApi = createApiClient<Player>("players");
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -31,7 +33,7 @@ function PlayerDetailContent() {
   const { t } = useI18n();
 
   useEffect(() => {
-    if (id) db.players.get(id).then((p) => p && setPlayer(p));
+    if (id) playersApi.get(id).then((p) => p && setPlayer(p));
   }, [id]);
 
   if (!id) {
@@ -59,15 +61,14 @@ function PlayerDetailContent() {
 
   const handleDelete = async () => {
     if (confirm(t("players.confirmDelete", { name: player.name }))) {
-      await db.players.delete(id);
+      await playersApi.remove(id);
       router.push("/players/");
     }
   };
 
   const handleUpdate = async (data: Omit<Player, "id" | "createdAt" | "updatedAt">) => {
-    const now = new Date().toISOString();
-    await db.players.update(id, { ...data, updatedAt: now });
-    const updated = await db.players.get(id);
+    await playersApi.update(id, data);
+    const updated = await playersApi.get(id);
     if (updated) setPlayer(updated);
     setShowEdit(false);
   };

@@ -18,7 +18,10 @@ import { ArrowLeft, Trash2, Trophy, Swords, Plus, ChevronRight } from "lucide-re
 import Link from "next/link";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
-import { db } from "@/lib/db";
+import { createApiClient } from "@/lib/api";
+import type { Match } from "@/types";
+
+const matchesApi = createApiClient<Match>("matches");
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "未开始", live: "进行中", finished: "已结束" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-500/15 text-blue-600", live: "bg-red-500/15 text-red-600", finished: "bg-gray-500/15 text-gray-600" };
@@ -147,11 +150,11 @@ function CompetitionDetailContent() {
     const dateTime = addDate ? `${addDate}T${addTime || "14:00"}` : "";
     const matchId = crypto.randomUUID();
     const now = new Date().toISOString();
-    await db.matches.add({
-      id: matchId, date: dateTime, venue: addVenue, type: comp.type, scope: "internal",
+    await matchesApi.add({
+      date: dateTime, venue: addVenue, type: comp.type, scope: "internal",
       homeTeam: addHome, awayTeam: addAway, opponent: addAway,
       homeLineup: [], awayLineup: [], lineup: [], status: "upcoming",
-      events: [], ratings: [], competitionId: comp.id, createdAt: now, updatedAt: now,
+      events: [], ratings: [], competitionId: comp.id,
     });
     await updateCompetition(comp.id, { matchIds: [...comp.matchIds, matchId] });
     setAddDialogOpen(false);
@@ -170,14 +173,11 @@ function CompetitionDetailContent() {
     if (nextRound.length === 0) { toast.success("赛事已结束！"); return; }
     const newMatchIds = [...comp.matchIds];
     for (const [home, away] of nextRound) {
-      const matchId = crypto.randomUUID();
-      const now = new Date().toISOString();
-      await db.matches.add({
-        id: matchId, date: "", venue: "", type: comp.type, scope: "internal",
+      const matchId = await matchesApi.add({
+        date: "", venue: "", type: comp.type, scope: "internal",
         homeTeam: home, awayTeam: away, opponent: away,
         homeLineup: [], awayLineup: [], lineup: [], status: "upcoming",
         events: [], ratings: [], competitionId: comp.id, round: comp.currentRound + 1,
-        createdAt: now, updatedAt: now,
       });
       newMatchIds.push(matchId);
     }

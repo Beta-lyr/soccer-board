@@ -9,8 +9,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
-import { useLiveQuery } from "dexie-react-hooks";
-import { db } from "@/lib/db";
+import { usePlayers } from "@/hooks/use-players";
+import { useMatches } from "@/hooks/use-matches";
+import { useCompetitions } from "@/hooks/use-competitions";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { motion } from "framer-motion";
 import { Trophy, Swords, TrendingUp, Users } from "lucide-react";
@@ -73,12 +74,9 @@ function calcTeamStats(matches: Match[]) {
 
 export default function StatsPage() {
   const { t } = useI18n();
-  const playersRaw = useLiveQuery(() => db.players.toArray());
-  const allMatchesRaw = useLiveQuery(() => db.matches.toArray());
-  const competitionsRaw = useLiveQuery(() => db.competitions.toArray());
-  const players = useMemo(() => playersRaw ?? [], [playersRaw]);
-  const allMatches = useMemo(() => allMatchesRaw ?? [], [allMatchesRaw]);
-  const competitions = useMemo(() => competitionsRaw ?? [], [competitionsRaw]);
+  const { players } = usePlayers();
+  const { matches: allMatches } = useMatches();
+  const { competitions } = useCompetitions();
 
   const [filterId, setFilterId] = useState<string>("all");
 

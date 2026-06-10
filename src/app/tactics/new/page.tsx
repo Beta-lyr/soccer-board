@@ -14,9 +14,12 @@ import { DrawingTools } from "@/components/tactics/drawing-tools";
 import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, getFormationsForPlayerCount, PLAYER_COUNTS, type TacticType } from "@/types";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
-import { db } from "@/lib/db";
+import { createApiClient } from "@/lib/api";
+import type { Tactic } from "@/types";
 import { useI18n } from "@/lib/i18n";
 import { toast } from "sonner";
+
+const tacticsApi = createApiClient<Tactic>("tactics");
 import { useTacticCanvas } from "@/hooks/use-tactic-canvas";
 import { exportCompositePng } from "@/lib/export-composite";
 
@@ -122,10 +125,9 @@ export default function NewTacticPage() {
         });
       }
 
-      await db.tactics.add({
-        id: crypto.randomUUID(), name, type: tacticType, formation,
+      await tacticsApi.add({
+        name, type: tacticType, formation,
         players: positions, drawings, thumbnail,
-        createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(),
       });
       toast.success(t("tactics.saved"));
     } catch (e) {
