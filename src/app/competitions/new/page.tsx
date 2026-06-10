@@ -26,6 +26,8 @@ export default function NewCompetitionPage() {
   const [type, setType] = useState<"league" | "cup">("league");
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [autoGenerate, setAutoGenerate] = useState(true);
+  const [defaultDate, setDefaultDate] = useState("");
+  const [defaultVenue, setDefaultVenue] = useState("");
   const [loading, setLoading] = useState(false);
 
   const toggleTeam = (id: string) => {
@@ -66,22 +68,25 @@ export default function NewCompetitionPage() {
 
           const matchId = crypto.randomUUID();
           const now = new Date().toISOString();
+          const hLineup = homePlayers.filter(Boolean) as NonNullable<typeof homePlayers[number]>[];
+          const aLineup = awayPlayers.filter(Boolean) as NonNullable<typeof awayPlayers[number]>[];
           await db.matches.add({
             id: matchId,
-            date: "",
-            venue: "",
+            date: defaultDate || "",
+            venue: defaultVenue,
             type,
             scope: "internal",
             homeTeam: home,
             awayTeam: away,
             opponent: away,
-            homeLineup: homePlayers.filter(Boolean) as NonNullable<typeof homePlayers[number]>[],
-            awayLineup: awayPlayers.filter(Boolean) as NonNullable<typeof awayPlayers[number]>[],
-            lineup: [],
+            homeLineup: hLineup,
+            awayLineup: aLineup,
+            // 兼容字段：用主队阵容填充
+            lineup: hLineup.filter((p) => p.playerId).map((p) => ({ playerId: p.playerId!, position: p.position })),
             status: "upcoming",
             events: [],
             ratings: [],
-            competitionId: undefined, // 赛事创建后回填
+            competitionId: undefined,
             createdAt: now,
             updatedAt: now,
           });
@@ -220,6 +225,26 @@ export default function NewCompetitionPage() {
             <p className="text-xs text-muted-foreground">取消勾选可稍后手动添加比赛</p>
           </div>
         </div>
+
+        {/* 默认日期/场地 */}
+        {autoGenerate && (
+          <Card>
+            <CardHeader className="pb-3"><CardTitle className="text-sm">默认比赛信息（可选）</CardTitle></CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>默认日期</Label>
+                  <Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>默认场地</Label>
+                  <Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder="例如：西操场" />
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground">可在赛事详情页逐场修改</p>
+            </CardContent>
+          </Card>
+        )}
 
         {/* 预览 */}
         {canSubmit && (

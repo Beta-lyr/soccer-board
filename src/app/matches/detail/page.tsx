@@ -158,6 +158,44 @@ function MatchDetailContent() {
           </CardContent>
         </Card>
 
+        {/* 双方阵容 */}
+        {((match.homeLineup && match.homeLineup.length > 0) || (match.awayLineup && match.awayLineup.length > 0)) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 主队阵容 */}
+            {match.homeLineup && match.homeLineup.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-sm">{homeTeamName} 阵容 ({match.homeLineup.length})</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
+                    {match.homeLineup.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded text-sm">
+                        <span className="w-8 text-xs font-mono text-muted-foreground">{entry.position || "-"}</span>
+                        <span className="flex-1 truncate">{entry.playerName ?? players.find((p) => p.id === entry.playerId)?.name ?? "?"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            {/* 客队阵容 */}
+            {match.awayLineup && match.awayLineup.length > 0 && (
+              <Card>
+                <CardHeader className="pb-2"><CardTitle className="text-sm">{awayTeamName} 阵容 ({match.awayLineup.length})</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="space-y-1">
+                    {match.awayLineup.map((entry, idx) => (
+                      <div key={idx} className="flex items-center gap-2 p-1.5 rounded text-sm">
+                        <span className="w-8 text-xs font-mono text-muted-foreground">{entry.position || "-"}</span>
+                        <span className="flex-1 truncate">{entry.playerName ?? players.find((p) => p.id === entry.playerId)?.name ?? "?"}</span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
         {/* 实时记录区 */}
         {isLive && (
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
