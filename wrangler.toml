@@ -1,0 +1,6 @@
+name = "soccer-board"
+pages_build_output_dir = "out"
+
+[[r2_buckets]]
+binding = "AVATAR_BUCKET"
+bucket_name = "betalyr-r2-bucket"
