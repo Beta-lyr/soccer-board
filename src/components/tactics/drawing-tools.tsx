@@ -13,7 +13,6 @@ import {
   Redo2,
   Trash2,
   Download,
-  Save,
 } from "lucide-react";
 
 export type DrawMode = "select" | "move" | "run" | "pass" | "dribble" | "defend";
@@ -25,7 +24,9 @@ interface DrawingToolsProps {
   onRedo: () => void;
   onClear: () => void;
   onExport: () => void;
-  onSave: () => void;
+  /** 当前选中的画线 id（select 模式下） */
+  selectedId?: string | null;
+  onDeleteSelected?: () => void;
 }
 
 export function DrawingTools({
@@ -35,7 +36,8 @@ export function DrawingTools({
   onRedo,
   onClear,
   onExport,
-  onSave,
+  selectedId,
+  onDeleteSelected,
 }: DrawingToolsProps) {
   const { t } = useI18n();
 
@@ -75,14 +77,17 @@ export function DrawingTools({
         <Trash2 className="h-4 w-4" />
       </Button>
 
+      {selectedId && onDeleteSelected && (
+        <Button variant="destructive" size="sm" onClick={onDeleteSelected} title="删除选中">
+          <Trash2 className="h-4 w-4" />
+          <span className="ml-1 text-xs">删除</span>
+        </Button>
+      )}
+
       <div className="w-px h-6 bg-border mx-1" />
 
       <Button variant="ghost" size="sm" onClick={onExport} title={t("tactics.exportPng")}>
         <Download className="h-4 w-4" />
-      </Button>
-      <Button variant="default" size="sm" onClick={onSave} title={t("common.save")}>
-        <Save className="h-4 w-4 mr-1" />
-        <span className="text-xs">{t("common.save")}</span>
       </Button>
     </div>
   );

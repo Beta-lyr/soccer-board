@@ -40,7 +40,7 @@ export interface Tactic {
   type: TacticType;
   formation: string;
   players: TacticPlayerPosition[];
-  drawings: unknown[];
+  drawings: unknown[]; // Drawing[] 新格式 | fabric JSON 旧格式
   thumbnail?: string;
   createdAt: string;
   updatedAt: string;
