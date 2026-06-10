@@ -66,6 +66,7 @@ export interface LineupTemplate {
 export type MatchType = "league" | "friendly" | "training" | "cup";
 export type MatchStatus = "upcoming" | "live" | "finished";
 export type MatchEventType = "goal" | "assist" | "yellow_card" | "red_card" | "substitution";
+export type MatchScope = "internal" | "external"; // 校内 | 校外
 
 // ============ 赛事（杯赛/联赛） ============
 
@@ -91,6 +92,7 @@ export interface Competition {
   teams: string[];
   matchIds: string[];
   standings?: Standing[];
+  currentRound: number;        // 杯赛当前轮次
   createdAt: string;
   updatedAt: string;
 }
@@ -112,17 +114,35 @@ export interface MatchRating {
   note?: string;
 }
 
+/** 比赛阵容条目（支持对方球员用名字） */
+export interface MatchLineupEntry {
+  playerId?: string;      // 本队球员（有ID）
+  playerName?: string;    // 对方球员（只有名字，校内比赛用）
+  position: string;
+}
+
 export interface Match {
   id: string;
   date: string;
-  opponent: string;
   venue: string;
   type: MatchType;
+  scope: MatchScope;          // 校内 | 校外
   status: MatchStatus;
-  lineup: { playerId: string; position: string }[];
+
+  homeTeam: string;           // 主队名（校内=院系名，校外="我方"）
+  awayTeam: string;           // 客队名（校内=另一个院系，校外=对手队名）
+  opponent: string;           // 兼容旧数据 = awayTeam
+
+  homeLineup: MatchLineupEntry[];  // 主队阵容
+  awayLineup: MatchLineupEntry[];  // 客队阵容（校外比赛为空）
+  lineup: { playerId: string; position: string }[];  // 兼容旧数据 = homeLineup
+
   score?: { home: number; away: number };
   events: MatchEvent[];
   ratings: MatchRating[];
+  competitionId?: string;     // 所属赛事
+  round?: number;             // 轮次
+
   createdAt: string;
   updatedAt: string;
 }

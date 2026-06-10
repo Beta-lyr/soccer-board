@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState, useEffect } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
@@ -26,7 +26,6 @@ const EVENT_TYPES: { type: MatchEventType; icon: string; label: string; color: s
 
 function MatchDetailContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const id = searchParams.get("id");
   const { t } = useI18n();
   const [match, setMatch] = useState<Match | null>(null);
@@ -95,17 +94,20 @@ function MatchDetailContent() {
 
   const getPlayerName = (pid: string) => players.find((p) => p.id === pid)?.name ?? "未知";
 
-  const TYPE_LABELS: Record<string, string> = { league: t("matches.league"), friendly: t("matches.friendly"), training: t("matches.training") };
+  const TYPE_LABELS: Record<string, string> = { league: t("matches.league"), friendly: t("matches.friendly"), training: t("matches.training"), cup: "杯赛" };
+  const SCOPE_LABELS: Record<string, string> = { internal: "校内", external: "校外" };
   const STATUS_LABELS: Record<string, string> = { upcoming: t("matches.upcoming"), live: t("matches.live"), finished: t("matches.finished") };
   const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-500/15 text-blue-600", live: "bg-red-500/15 text-red-600 animate-pulse", finished: "bg-gray-500/15 text-gray-600" };
 
   const isLive = match.status === "live";
   const isFinished = match.status === "finished";
+  const homeTeamName = match.homeTeam || "我方";
+  const awayTeamName = match.awayTeam || match.opponent;
 
   return (
     <PageTransition>
       <Header
-        title={`${match.opponent}`}
+        title={`${homeTeamName} vs ${awayTeamName}`}
         actions={
           <div className="flex gap-2">
             <Link href="/matches/">
@@ -135,7 +137,7 @@ function MatchDetailContent() {
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h2 className="text-xl font-bold">vs {match.opponent}</h2>
+                  <h2 className="text-xl font-bold">{homeTeamName} vs {awayTeamName}</h2>
                   <Badge variant="outline" className={STATUS_COLORS[match.status]}>
                     {match.status === "live" && "● "}{STATUS_LABELS[match.status]}
                   </Badge>
@@ -144,6 +146,7 @@ function MatchDetailContent() {
                   <span>{new Date(match.date).toLocaleDateString("zh-CN")}</span>
                   {match.venue && <span>@ {match.venue}</span>}
                   <span>{TYPE_LABELS[match.type]}</span>
+                  <span>{SCOPE_LABELS[match.scope] ?? ""}</span>
                 </div>
               </div>
               {match.score && (

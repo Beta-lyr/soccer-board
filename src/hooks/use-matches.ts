@@ -9,14 +9,16 @@ export function useMatches() {
 
   const addMatch = async (data: Omit<Match, "id" | "createdAt" | "updatedAt" | "events" | "ratings">) => {
     const now = new Date().toISOString();
+    const id = crypto.randomUUID();
     await db.matches.add({
-      id: crypto.randomUUID(),
+      id,
       ...data,
       events: [],
       ratings: [],
       createdAt: now,
       updatedAt: now,
     });
+    return id;
   };
 
   const updateMatch = async (id: string, data: Partial<Omit<Match, "id" | "createdAt">>) => {

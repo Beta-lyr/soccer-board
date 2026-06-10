@@ -58,12 +58,17 @@ export default function NewCompetitionPage() {
 
       // 批量创建比赛
       const matchIds: string[] = [];
-      for (const [, away] of schedule) {
+      for (const [home, away] of schedule) {
         const matchData = {
           date: "",
           opponent: away,
           venue: "",
           type: type as "league" | "cup",
+          scope: "internal" as const,
+          homeTeam: home,
+          awayTeam: away,
+          homeLineup: [],
+          awayLineup: [],
           status: "upcoming" as const,
           lineup: [],
         };
@@ -79,6 +84,7 @@ export default function NewCompetitionPage() {
         teams: validTeams,
         matchIds,
         standings: format === "round_robin" ? initStandings(validTeams) : undefined,
+        currentRound: 1,
       });
 
       toast.success(`赛事已创建，共 ${schedule.length} 场比赛`);

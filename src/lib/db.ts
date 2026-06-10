@@ -57,6 +57,15 @@ class SoccerDB extends Dexie {
       matchTimers: "matchId",
       competitions: "id, name, type, createdAt",
     });
+    this.version(5).stores({
+      players: "id, name, number, status, createdAt",
+      tactics: "id, name, type, formation, createdAt",
+      lineupTemplates: "id, name, formation, createdAt",
+      matches: "id, date, opponent, status, type, scope, competitionId, createdAt",
+      trainings: "id, date, theme, createdAt",
+      matchTimers: "matchId",
+      competitions: "id, name, type, createdAt",
+    });
   }
 }
 
