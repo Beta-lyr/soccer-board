@@ -44,16 +44,24 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const formData = await request.formData();
   const file = formData.get("file");
 
-  if (!file || !(file instanceof File)) {
+  if (!file || !(file instanceof Blob)) {
     return Response.json(
       { error: "No file provided" },
       { status: 400, headers }
     );
   }
 
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (file.size === 0) {
     return Response.json(
-      { error: `Invalid file type: ${file.type}. Allowed: JPEG, PNG, WebP, GIF` },
+      { error: "Empty file" },
+      { status: 400, headers }
+    );
+  }
+
+  const fileType = file.type || "image/jpeg";
+  if (!ALLOWED_TYPES.includes(fileType)) {
+    return Response.json(
+      { error: `Invalid file type: ${fileType}. Allowed: JPEG, PNG, WebP, GIF` },
       { status: 400, headers }
     );
   }
@@ -65,7 +73,7 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     );
   }
 
-  const ext = file.name.split(".").pop() || file.type.split("/")[1] || "jpg";
+  const ext = fileType.split("/")[1] || "jpg";
   const key = `avatars/${crypto.randomUUID()}.${ext}`;
 
   await env.AVATAR_BUCKET.put(key, file, {

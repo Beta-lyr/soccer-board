@@ -14,7 +14,7 @@ interface AvatarUploadProps {
   className?: string;
 }
 
-async function compressImage(file: File): Promise<File> {
+async function compressImage(file: File): Promise<Blob> {
   const MAX_DIM = 256;
   const QUALITY = 0.8;
 
@@ -42,7 +42,7 @@ async function compressImage(file: File): Promise<File> {
       canvas.toBlob(
         (blob) => {
           if (!blob) { resolve(file); return; }
-          resolve(new File([blob], file.name, { type: "image/jpeg" }));
+          resolve(blob);
         },
         "image/jpeg",
         QUALITY
@@ -69,7 +69,7 @@ export function AvatarUpload({ avatarKey, fallback, onUpload, onRemove, classNam
     try {
       const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append("file", compressed);
+      formData.append("file", compressed, "avatar.jpg");
 
       const res = await fetch("/api/avatar/upload", { method: "POST", body: formData });
       if (!res.ok) {
