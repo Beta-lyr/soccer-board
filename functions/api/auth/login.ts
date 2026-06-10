@@ -24,7 +24,7 @@ async function createSession(secret: string): Promise<string> {
 export async function onRequestPost(context: { request: Request; env: any }) {
   const { request, env } = context;
 
-  const body = await request.json().catch(() => ({}));
+  const body = (await request.json().catch(() => ({}))) as Record<string, unknown>;
   const password = body.password;
 
   if (!password || typeof password !== "string") {

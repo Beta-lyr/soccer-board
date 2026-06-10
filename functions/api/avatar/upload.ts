@@ -44,21 +44,23 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const formData = await request.formData();
   const file = formData.get("file");
 
-  if (!file || !(file instanceof Blob)) {
+  if (!file || typeof file === "string") {
     return Response.json(
       { error: "No file provided" },
       { status: 400, headers }
     );
   }
 
-  if (file.size === 0) {
+  const imageFile = file as File;
+
+  if (imageFile.size === 0) {
     return Response.json(
       { error: "Empty file" },
       { status: 400, headers }
     );
   }
 
-  const fileType = file.type || "image/jpeg";
+  const fileType = imageFile.type || "image/jpeg";
   if (!ALLOWED_TYPES.includes(fileType)) {
     return Response.json(
       { error: `Invalid file type: ${fileType}. Allowed: JPEG, PNG, WebP, GIF` },
@@ -66,9 +68,9 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
     );
   }
 
-  if (file.size > MAX_SIZE) {
+  if (imageFile.size > MAX_SIZE) {
     return Response.json(
-      { error: `File too large: ${(file.size / 1024 / 1024).toFixed(1)}MB. Max: 2MB` },
+      { error: `File too large: ${(imageFile.size / 1024 / 1024).toFixed(1)}MB. Max: 2MB` },
       { status: 400, headers }
     );
   }
@@ -76,9 +78,9 @@ export async function onRequestPost(context: { request: Request; env: Env }) {
   const ext = fileType.split("/")[1] || "jpg";
   const key = `avatars/${crypto.randomUUID()}.${ext}`;
 
-  await env.AVATAR_BUCKET.put(key, file, {
+  await env.AVATAR_BUCKET.put(key, imageFile, {
     httpMetadata: {
-      contentType: file.type,
+      contentType: imageFile.type,
       cacheControl: "public, max-age=31536000, immutable",
     },
   });
