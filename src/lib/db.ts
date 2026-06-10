@@ -6,6 +6,7 @@ import type {
   Match,
   Training,
   Competition,
+  Team,
 } from "@/types";
 
 export interface MatchTimerState {
@@ -23,6 +24,7 @@ class SoccerDB extends Dexie {
   trainings!: Table<Training>;
   matchTimers!: Table<MatchTimerState>;
   competitions!: Table<Competition>;
+  teams!: Table<Team>;
 
   constructor() {
     super("soccer-board");
@@ -65,6 +67,7 @@ class SoccerDB extends Dexie {
       trainings: "id, date, theme, createdAt",
       matchTimers: "matchId",
       competitions: "id, name, type, createdAt",
+      teams: "id, name, createdAt",
     });
   }
 }

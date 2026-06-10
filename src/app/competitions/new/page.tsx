@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -8,43 +8,33 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCompetitions, generateRoundRobinSchedule, generateKnockoutBracket, initStandings } from "@/hooks/use-competitions";
-import { useMatches } from "@/hooks/use-matches";
-import { ArrowLeft, Trophy, Swords, Plus, X } from "lucide-react";
+import { useTeams } from "@/hooks/use-teams";
+import { ArrowLeft, Trophy, Swords, Users } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { db } from "@/lib/db";
 
 export default function NewCompetitionPage() {
   const router = useRouter();
   const { addCompetition } = useCompetitions();
-  const { addMatch } = useMatches();
+  const { teams: allTeams } = useTeams();
 
   const [name, setName] = useState("");
   const [type, setType] = useState<"league" | "cup">("league");
-  const [teams, setTeams] = useState<string[]>([""]);
-  const [bulkInput, setBulkInput] = useState("");
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
+  const [autoGenerate, setAutoGenerate] = useState(true);
   const [loading, setLoading] = useState(false);
 
-  const addTeam = () => setTeams([...teams, ""]);
-  const removeTeam = (idx: number) => setTeams(teams.filter((_, i) => i !== idx));
-  const updateTeam = (idx: number, value: string) => {
-    const next = [...teams];
-    next[idx] = value;
-    setTeams(next);
+  const toggleTeam = (id: string) => {
+    setSelectedTeamIds((prev) => prev.includes(id) ? prev.filter((t) => t !== id) : [...prev, id]);
   };
 
-  const handleBulkImport = () => {
-    const names = bulkInput.split(/[\n,，、]+/).map((s) => s.trim()).filter(Boolean);
-    if (names.length > 0) {
-      setTeams(names);
-      setBulkInput("");
-    }
-  };
-
-  const validTeams = teams.filter((t) => t.trim());
-  const canSubmit = name.trim() && validTeams.length >= 2;
+  const selectedTeams = useMemo(() => allTeams.filter((t) => selectedTeamIds.includes(t.id)), [allTeams, selectedTeamIds]);
+  const teamNames = selectedTeams.map((t) => t.shortName ?? t.name);
+  const canSubmit = name.trim() && selectedTeams.length >= 2;
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -52,42 +42,82 @@ export default function NewCompetitionPage() {
 
     try {
       const format = type === "league" ? "round_robin" : "knockout";
-      const schedule = format === "round_robin"
-        ? generateRoundRobinSchedule(validTeams)
-        : generateKnockoutBracket(validTeams);
-
-      // 批量创建比赛
       const matchIds: string[] = [];
-      for (const [home, away] of schedule) {
-        const matchData = {
-          date: "",
-          opponent: away,
-          venue: "",
-          type: type as "league" | "cup",
-          scope: "internal" as const,
-          homeTeam: home,
-          awayTeam: away,
-          homeLineup: [],
-          awayLineup: [],
-          status: "upcoming" as const,
-          lineup: [],
-        };
-        const id = await addMatch(matchData);
-        if (typeof id === "string") matchIds.push(id);
+
+      if (autoGenerate) {
+        const schedule = format === "round_robin"
+          ? generateRoundRobinSchedule(teamNames)
+          : generateKnockoutBracket(teamNames);
+
+        for (const [home, away] of schedule) {
+          // 根据队伍名找到对应的 Team，获取球员
+          const homeTeam = selectedTeams.find((t) => (t.shortName ?? t.name) === home);
+          const awayTeam = selectedTeams.find((t) => (t.shortName ?? t.name) === away);
+
+          // 获取球员信息填充阵容
+          const homePlayers = homeTeam ? await Promise.all(homeTeam.playerIds.map(async (pid) => {
+            const p = await db.players.get(pid);
+            return p ? { playerId: pid, playerName: p.name, position: p.positions[0] ?? "" } : null;
+          })) : [];
+          const awayPlayers = awayTeam ? await Promise.all(awayTeam.playerIds.map(async (pid) => {
+            const p = await db.players.get(pid);
+            return p ? { playerId: pid, playerName: p.name, position: p.positions[0] ?? "" } : null;
+          })) : [];
+
+          const matchId = crypto.randomUUID();
+          const now = new Date().toISOString();
+          await db.matches.add({
+            id: matchId,
+            date: "",
+            venue: "",
+            type,
+            scope: "internal",
+            homeTeam: home,
+            awayTeam: away,
+            opponent: away,
+            homeLineup: homePlayers.filter(Boolean) as NonNullable<typeof homePlayers[number]>[],
+            awayLineup: awayPlayers.filter(Boolean) as NonNullable<typeof awayPlayers[number]>[],
+            lineup: [],
+            status: "upcoming",
+            events: [],
+            ratings: [],
+            competitionId: undefined, // 赛事创建后回填
+            createdAt: now,
+            updatedAt: now,
+          });
+          matchIds.push(matchId);
+        }
+
+        const compId = await addCompetition({
+          name: name.trim(),
+          type,
+          format,
+          teams: teamNames,
+          matchIds,
+          standings: format === "round_robin" ? initStandings(teamNames) : undefined,
+          currentRound: 1,
+        });
+
+        // 回填 competitionId 到比赛
+        for (const mid of matchIds) {
+          await db.matches.update(mid, { competitionId: compId as string });
+        }
+
+        toast.success(`赛事已创建，共 ${schedule.length} 场比赛`);
+      } else {
+        // 不自动生成比赛，只创建赛事
+        await addCompetition({
+          name: name.trim(),
+          type,
+          format,
+          teams: teamNames,
+          matchIds: [],
+          standings: format === "round_robin" ? initStandings(teamNames) : undefined,
+          currentRound: 1,
+        });
+        toast.success("赛事已创建，可手动添加比赛");
       }
 
-      // 创建赛事
-      await addCompetition({
-        name: name.trim(),
-        type,
-        format,
-        teams: validTeams,
-        matchIds,
-        standings: format === "round_robin" ? initStandings(validTeams) : undefined,
-        currentRound: 1,
-      });
-
-      toast.success(`赛事已创建，共 ${schedule.length} 场比赛`);
       router.push("/competitions/");
     } catch {
       toast.error("创建失败");
@@ -138,50 +168,58 @@ export default function NewCompetitionPage() {
           </div>
         </div>
 
-        {/* 参赛队伍 */}
+        {/* 选择参赛队伍 */}
         <Card>
           <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-sm">参赛队伍 ({validTeams.length})</CardTitle>
-              <Button variant="outline" size="sm" onClick={addTeam}>
-                <Plus className="h-3.5 w-3.5 mr-1" />添加
-              </Button>
-            </div>
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Users className="h-4 w-4" />参赛队伍 ({selectedTeams.length})
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-            {teams.map((team, idx) => (
-              <div key={idx} className="flex gap-2">
-                <Input
-                  value={team}
-                  onChange={(e) => updateTeam(idx, e.target.value)}
-                  placeholder={`队伍 ${idx + 1}`}
-                  className="h-9"
-                />
-                {teams.length > 1 && (
-                  <Button variant="ghost" size="sm" onClick={() => removeTeam(idx)} className="shrink-0 px-2">
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+          <CardContent>
+            {allTeams.length === 0 ? (
+              <div className="text-center py-6 text-muted-foreground">
+                <p className="text-sm mb-2">暂无队伍</p>
+                <Link href="/teams/new/">
+                  <Button variant="outline" size="sm">先去创建队伍</Button>
+                </Link>
               </div>
-            ))}
-
-            {/* 批量导入 */}
-            <div className="pt-3 border-t">
-              <Label className="text-xs text-muted-foreground">批量导入（每行一个或用逗号分隔）</Label>
-              <div className="flex gap-2 mt-1.5">
-                <Textarea
-                  value={bulkInput}
-                  onChange={(e) => setBulkInput(e.target.value)}
-                  placeholder={"队伍A\n队伍B\n队伍C"}
-                  className="min-h-[60px] text-sm"
-                />
-                <Button variant="outline" size="sm" onClick={handleBulkImport} className="shrink-0">
-                  导入
-                </Button>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                {allTeams.map((team) => (
+                  <label
+                    key={team.id}
+                    className={cn(
+                      "flex items-center gap-2 p-2.5 rounded-md border cursor-pointer transition-colors",
+                      selectedTeamIds.includes(team.id) ? "bg-primary/10 border-primary/30" : "hover:bg-accent/50"
+                    )}
+                  >
+                    <Checkbox
+                      checked={selectedTeamIds.includes(team.id)}
+                      onCheckedChange={() => toggleTeam(team.id)}
+                    />
+                    <div className="w-6 h-6 rounded bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                      {team.logo ? (
+                        <img src={`/api/avatar/serve?key=${encodeURIComponent(team.logo)}`} alt="" className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-[10px] font-bold text-muted-foreground">{(team.shortName ?? team.name)[0]}</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-medium truncate">{team.name}</span>
+                  </label>
+                ))}
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* 自动生成选项 */}
+        <div className="flex items-center gap-3 p-3 rounded-lg border">
+          <Checkbox checked={autoGenerate} onCheckedChange={(v) => setAutoGenerate(v === true)} />
+          <div>
+            <Label className="text-sm cursor-pointer">自动生成赛程</Label>
+            <p className="text-xs text-muted-foreground">取消勾选可稍后手动添加比赛</p>
+          </div>
+        </div>
 
         {/* 预览 */}
         {canSubmit && (
@@ -190,19 +228,28 @@ export default function NewCompetitionPage() {
               <CardTitle className="text-sm">赛程预览</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {type === "league"
-                  ? `单循环赛制，共 ${validTeams.length * (validTeams.length - 1) / 2} 场比赛`
-                  : `淘汰赛制，首轮 ${Math.pow(2, Math.ceil(Math.log2(validTeams.length)))} 进 ${Math.pow(2, Math.ceil(Math.log2(validTeams.length))) / 2}`
-                }
-              </p>
+              {autoGenerate ? (
+                <p className="text-sm text-muted-foreground">
+                  {type === "league"
+                    ? `单循环赛制，共 ${selectedTeams.length * (selectedTeams.length - 1) / 2} 场比赛`
+                    : `淘汰赛制，首轮 ${Math.pow(2, Math.ceil(Math.log2(selectedTeams.length)))} 进 ${Math.pow(2, Math.ceil(Math.log2(selectedTeams.length))) / 2}`
+                  }
+                </p>
+              ) : (
+                <p className="text-sm text-muted-foreground">创建后可在赛事详情页手动添加比赛</p>
+              )}
+              <div className="flex flex-wrap gap-1 mt-2">
+                {selectedTeams.map((t) => (
+                  <span key={t.id} className="text-xs px-2 py-0.5 rounded bg-muted">{t.shortName ?? t.name}</span>
+                ))}
+              </div>
             </CardContent>
           </Card>
         )}
 
         {/* 提交 */}
         <Button onClick={handleSubmit} disabled={!canSubmit || loading} className="w-full" size="lg">
-          {loading ? "创建中..." : `创建赛事${canSubmit ? ` (${type === "league" ? validTeams.length * (validTeams.length - 1) / 2 : Math.pow(2, Math.ceil(Math.log2(validTeams.length))) - 1} 场)` : ""}`}
+          {loading ? "创建中..." : `创建赛事${canSubmit && autoGenerate ? ` (${type === "league" ? selectedTeams.length * (selectedTeams.length - 1) / 2 : Math.pow(2, Math.ceil(Math.log2(selectedTeams.length))) - 1} 场)` : ""}`}
         </Button>
       </div>
     </PageTransition>

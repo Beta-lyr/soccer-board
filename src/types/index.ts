@@ -25,6 +25,18 @@ export interface Player {
   updatedAt: string;
 }
 
+// ============ 队伍 ============
+
+export interface Team {
+  id: string;
+  name: string;           // 队伍名（如"计算机学院"）
+  shortName?: string;     // 简称（如"计算机"）
+  logo?: string;          // logo key（R2）
+  playerIds: string[];    // 关联的球员ID列表
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type TacticType = "open_play" | "corner" | "free_kick" | "throw_in";
 
 export interface TacticPlayerPosition {
