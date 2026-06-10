@@ -21,16 +21,25 @@ function getElapsed(state: MatchTimerState): number {
 export function useMatchTimer(matchId: string) {
   const [state, setState] = useState<MatchTimerState>({ matchId, ...DEFAULT });
   const [minute, setMinute] = useState(0);
+  const stateRef = useRef(state);
   const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Keep ref in sync
+  stateRef.current = state;
 
   // Load from IndexedDB on mount
   useEffect(() => {
+    if (!matchId) return;
     let cancelled = false;
+    console.log("[Timer] Loading state for match:", matchId);
     db.matchTimers.get(matchId).then((saved) => {
       if (cancelled) return;
       if (saved) {
+        console.log("[Timer] Restored state:", saved);
         setState(saved);
         setMinute(Math.floor(getElapsed(saved) / 60000));
+      } else {
+        console.log("[Timer] No saved state found");
       }
     });
     return () => { cancelled = true; };
@@ -39,30 +48,45 @@ export function useMatchTimer(matchId: string) {
   // Tick every second when running
   useEffect(() => {
     if (state.isRunning) {
+      console.log("[Timer] Starting tick, startedAt:", state.startedAt, "pausedElapsed:", state.pausedElapsed);
       tickRef.current = setInterval(() => {
-        setMinute(Math.floor(getElapsed(state) / 60000));
+        const current = stateRef.current;
+        const elapsed = getElapsed(current);
+        const min = Math.floor(elapsed / 60000);
+        setMinute(min);
       }, 1000);
+    } else {
+      console.log("[Timer] Stopped tick");
     }
     return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
+      if (tickRef.current) {
+        clearInterval(tickRef.current);
+        tickRef.current = null;
+      }
     };
-  }, [state.isRunning, state.startedAt, state.pausedElapsed]);
+  }, [state.isRunning]);
 
   const save = useCallback(async (next: MatchTimerState) => {
+    console.log("[Timer] Saving:", next);
     setState(next);
     await db.matchTimers.put(next);
   }, []);
 
   const start = useCallback(async () => {
-    await save({ ...state, startedAt: Date.now(), isRunning: true });
-  }, [state, save]);
+    const current = stateRef.current;
+    console.log("[Timer] Start clicked, current state:", current);
+    await save({ ...current, startedAt: Date.now(), isRunning: true });
+  }, [save]);
 
   const pause = useCallback(async () => {
-    const elapsed = getElapsed(state);
-    await save({ ...state, pausedElapsed: elapsed, startedAt: 0, isRunning: false });
-  }, [state, save]);
+    const current = stateRef.current;
+    const elapsed = getElapsed(current);
+    console.log("[Timer] Pause clicked, elapsed:", elapsed);
+    await save({ ...current, pausedElapsed: elapsed, startedAt: 0, isRunning: false });
+  }, [save]);
 
   const reset = useCallback(async () => {
+    console.log("[Timer] Reset clicked");
     if (tickRef.current) clearInterval(tickRef.current);
     await save({ matchId, ...DEFAULT });
     setMinute(0);
