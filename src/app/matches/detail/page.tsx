@@ -95,8 +95,8 @@ function MatchDetailContent() {
 
   const getPlayerName = (pid: string) => players.find((p) => p.id === pid)?.name ?? "未知";
 
-  const TYPE_LABELS: Record<string, string> = { league: "联赛", friendly: "友谊赛", training: "训练赛" };
-  const STATUS_LABELS: Record<string, string> = { upcoming: "未开始", live: "进行中", finished: "已结束" };
+  const TYPE_LABELS: Record<string, string> = { league: t("matches.league"), friendly: t("matches.friendly"), training: t("matches.training") };
+  const STATUS_LABELS: Record<string, string> = { upcoming: t("matches.upcoming"), live: t("matches.live"), finished: t("matches.finished") };
   const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-500/15 text-blue-600", live: "bg-red-500/15 text-red-600 animate-pulse", finished: "bg-gray-500/15 text-gray-600" };
 
   const isLive = match.status === "live";

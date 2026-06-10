@@ -47,9 +47,9 @@ export default function NewMatchPage() {
   };
 
   const TYPE_OPTIONS: { value: MatchType; key: string }[] = [
-    { value: "league", key: "比赛" },
-    { value: "friendly", key: "友谊赛" },
-    { value: "training", key: "训练赛" },
+    { value: "league", key: "matches.league" },
+    { value: "friendly", key: "matches.friendly" },
+    { value: "training", key: "matches.training" },
   ];
 
   return (
@@ -89,7 +89,7 @@ export default function NewMatchPage() {
               <Select value={matchType} onValueChange={(v) => v && setMatchType(v as MatchType)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.key}</SelectItem>)}
+                  {TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{t(o.key)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
