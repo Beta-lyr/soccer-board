@@ -1,6 +1,6 @@
 "use client";
 
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "./status-badge";
 import { useI18n } from "@/lib/i18n";
 import type { Player } from "@/types";
@@ -21,6 +21,7 @@ export function PlayerCard({ player, onClick }: PlayerCardProps) {
     >
       <div className="flex items-center gap-3">
         <Avatar className="h-12 w-12 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+          {player.avatar && <AvatarImage src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`} />}
           <AvatarFallback className="text-lg font-black bg-primary text-primary-foreground">
             {player.number}
           </AvatarFallback>

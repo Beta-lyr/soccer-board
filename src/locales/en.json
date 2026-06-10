@@ -77,7 +77,12 @@
     "bothFeet": "Both",
     "confirmDelete": "Delete player \"{name}\"?",
     "playerDetail": "Player Detail",
-    "notSpecified": "No player specified"
+    "notSpecified": "No player specified",
+    "avatar": "Avatar",
+    "clickToUploadAvatar": "Click to upload avatar",
+    "uploadingAvatar": "Uploading...",
+    "dropImage": "Drop here",
+    "avatarUploadFailed": "Avatar upload failed"
   },
   "tactics": {
     "title": "Tactics",

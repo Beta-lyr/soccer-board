@@ -19,6 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useI18n } from "@/lib/i18n";
+import { AvatarUpload } from "./avatar-upload";
 import type { Player, PlayerAbilities, PlayerStatus, PreferredFoot } from "@/types";
 
 const POSITIONS = [
@@ -46,6 +47,7 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
   const [abilities, setAbilities] = useState<PlayerAbilities>(
     initialData?.abilities ?? { speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 }
   );
+  const [avatarKey, setAvatarKey] = useState(initialData?.avatar ?? "");
 
   const STATUS_OPTIONS: { value: PlayerStatus; key: string }[] = [
     { value: "healthy", key: "players.healthy" },
@@ -73,6 +75,7 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
     setName(""); setNumber(""); setHeight(""); setWeight("");
     setPreferredFoot("right"); setSelectedPositions([]); setStatus("healthy");
     setAbilities({ speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 });
+    setAvatarKey("");
   };
 
   const handleSubmit = async () => {
@@ -83,7 +86,7 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
         height: height ? parseInt(height) : undefined,
         weight: weight ? parseInt(weight) : undefined,
         preferredFoot, positions: selectedPositions, status, abilities,
-        avatar: initialData?.avatar,
+        avatar: avatarKey || undefined,
       });
       onOpenChange(false);
     } catch (e) {
@@ -105,6 +108,13 @@ export function PlayerForm({ open, onOpenChange, onSubmit, initialData }: Player
         </DialogHeader>
 
         <div className="space-y-6">
+          <AvatarUpload
+            avatarKey={avatarKey}
+            fallback={number || "?"}
+            onUpload={(key) => setAvatarKey(key)}
+            onRemove={() => setAvatarKey("")}
+          />
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{t("common.name")} *</Label>

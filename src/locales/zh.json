@@ -77,7 +77,12 @@
     "bothFeet": "双脚",
     "confirmDelete": "确认删除球员「{name}」？",
     "playerDetail": "球员详情",
-    "notSpecified": "未指定球员"
+    "notSpecified": "未指定球员",
+    "avatar": "头像",
+    "clickToUploadAvatar": "点击上传头像",
+    "uploadingAvatar": "上传中...",
+    "dropImage": "拖放到此处",
+    "avatarUploadFailed": "头像上传失败"
   },
   "tactics": {
     "title": "战术板",

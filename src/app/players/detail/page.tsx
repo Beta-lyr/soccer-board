@@ -7,7 +7,7 @@ import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/players/status-badge";
 import { AbilityRadar } from "@/components/players/ability-radar";
 import { PlayerForm } from "@/components/players/player-form";
@@ -92,6 +92,7 @@ function PlayerDetailContent() {
               <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6">
                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.1 }}>
                   <Avatar className="h-16 w-16 sm:h-20 sm:w-20 ring-4 ring-primary/10">
+                    {player.avatar && <AvatarImage src={`/api/avatar/serve?key=${encodeURIComponent(player.avatar)}`} />}
                     <AvatarFallback className="text-2xl sm:text-3xl font-black bg-primary text-primary-foreground">{player.number}</AvatarFallback>
                   </Avatar>
                 </motion.div>
