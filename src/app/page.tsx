@@ -38,14 +38,24 @@ function Football3D() {
           `,
         }}
       >
-        {/* 五边形纹理 */}
-        <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 200 200">
-          <polygon points="100,20 130,55 120,95 80,95 70,55" fill="none" stroke="white" strokeWidth="1" />
-          <polygon points="130,55 165,75 155,115 120,95" fill="none" stroke="white" strokeWidth="1" />
-          <polygon points="70,55 35,75 45,115 80,95" fill="none" stroke="white" strokeWidth="1" />
-          <polygon points="80,95 120,95 130,135 100,155 70,135" fill="none" stroke="white" strokeWidth="1" />
-          <polygon points="120,95 155,115 150,155 130,135" fill="none" stroke="white" strokeWidth="1" />
-          <polygon points="45,115 80,95 70,135 50,155" fill="none" stroke="white" strokeWidth="1" />
+        {/* 足球缝线纹理 */}
+        <svg className="absolute inset-0 w-full h-full opacity-15" viewBox="0 0 200 200">
+          {/* 中心五边形 */}
+          <polygon points="100,60 124,74 116,102 84,102 76,74" fill="rgba(255,255,255,0.1)" stroke="white" strokeWidth="0.8" />
+          {/* 上 */}
+          <line x1="100" y1="60" x2="100" y2="30" stroke="white" strokeWidth="0.6" />
+          <line x1="124" y1="74" x2="148" y2="50" stroke="white" strokeWidth="0.6" />
+          <line x1="76" y1="74" x2="52" y2="50" stroke="white" strokeWidth="0.6" />
+          {/* 下 */}
+          <line x1="116" y1="102" x2="140" y2="130" stroke="white" strokeWidth="0.6" />
+          <line x1="84" y1="102" x2="60" y2="130" stroke="white" strokeWidth="0.6" />
+          {/* 外圈五边形轮廓 */}
+          <polygon points="100,30 148,50 140,130 60,130 52,50" fill="none" stroke="white" strokeWidth="0.4" strokeDasharray="4 3" />
+          {/* 额外缝线 */}
+          <line x1="148" y1="50" x2="170" y2="90" stroke="white" strokeWidth="0.4" />
+          <line x1="52" y1="50" x2="30" y2="90" stroke="white" strokeWidth="0.4" />
+          <line x1="140" y1="130" x2="160" y2="165" stroke="white" strokeWidth="0.4" />
+          <line x1="60" y1="130" x2="40" y2="165" stroke="white" strokeWidth="0.4" />
         </svg>
         {/* 高光 */}
         <div

@@ -43,21 +43,21 @@ export function AbilityRadar({ abilities }: { abilities: PlayerAbilities }) {
     >
       <ResponsiveContainer width="100%" height={280}>
         <RadarChart data={data}>
-          <PolarGrid stroke="hsl(var(--border))" />
+          <PolarGrid stroke="var(--border)" />
           <PolarAngleAxis
             dataKey="subject"
-            tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+            tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
           />
           <PolarRadiusAxis
             angle={30}
             domain={[0, 10]}
-            tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+            tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
           />
           <Radar
             name="能力"
             dataKey="value"
-            stroke="hsl(var(--primary))"
-            fill="hsl(var(--primary))"
+            stroke="var(--primary)"
+            fill="var(--primary)"
             fillOpacity={0.25}
             strokeWidth={2}
             animationDuration={800}
