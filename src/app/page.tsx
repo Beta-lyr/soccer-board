@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, Swords, Trophy, Calendar, Play } from "lucide-react";
+import { ArrowRight, Users, Swords, Trophy, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef } from "react";
 
@@ -38,24 +38,88 @@ function Football3D() {
           `,
         }}
       >
-        {/* 足球缝线纹理 */}
+        {/* 足球缝线纹理 — 截角二十面体（12五边形+20六边形）球面投影，scale=98 填满球面 */}
         <svg className="absolute inset-0 w-full h-full opacity-15" viewBox="0 0 200 200">
+          {/* 缝线（贝塞尔曲线模拟球面弯曲，z-depth 透明度渐变） */}
+          <path d="M132.8,119.8 Q127.9,100.0 132.8,80.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M132.8,119.8 Q113.4,125.3 98.6,139.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M132.8,119.8 Q141.7,127.0 158.7,139.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M118.6,196.0 Q100.0,191.1 81.4,196.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M118.6,196.0 Q131.6,185.3 148.1,183.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.37" strokeLinecap="round" />
+          <path d="M197.0,100.0 Q189.8,84.8 192.2,68.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.34" strokeLinecap="round" />
+          <path d="M197.0,100.0 Q189.8,115.2 192.2,132.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.34" strokeLinecap="round" />
+          <path d="M132.8,80.2 Q113.4,74.7 98.6,60.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M132.8,80.2 Q141.7,73.0 158.7,60.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M81.4,196.0 Q68.4,185.3 51.9,183.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.33" strokeLinecap="round" />
+          <path d="M81.4,196.0 Q78.8,185.1 73.8,183.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.44" strokeLinecap="round" />
+          <path d="M118.6,4.0 Q100.0,8.9 81.4,4.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M118.6,4.0 Q131.6,14.7 148.1,16.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.37" strokeLinecap="round" />
+          <path d="M16.6,100.0 Q14.7,100.0 3.0,100.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.47" strokeLinecap="round" />
+          <path d="M16.6,100.0 Q30.5,85.0 34.8,68.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.56" strokeLinecap="round" />
+          <path d="M16.6,100.0 Q30.5,115.0 34.8,132.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.56" strokeLinecap="round" />
+          <path d="M81.4,4.0 Q68.4,14.7 51.9,16.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.33" strokeLinecap="round" />
+          <path d="M81.4,4.0 Q78.8,14.9 73.8,16.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.44" strokeLinecap="round" />
+          <path d="M3.0,100.0 Q10.2,84.8 7.8,68.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.36" strokeLinecap="round" />
+          <path d="M3.0,100.0 Q10.2,115.2 7.8,132.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.36" strokeLinecap="round" />
+          <path d="M51.9,16.2 Q42.1,29.9 26.0,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.33" strokeLinecap="round" />
+          <path d="M7.8,68.0 Q21.1,54.5 26.0,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M73.8,16.2 Q89.3,27.2 103.3,28.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.55" strokeLinecap="round" />
+          <path d="M73.8,16.2 Q59.1,30.3 39.5,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.50" strokeLinecap="round" />
+          <path d="M7.8,132.0 Q21.1,145.5 26.0,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M51.9,183.8 Q42.1,170.1 26.0,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.33" strokeLinecap="round" />
+          <path d="M98.6,60.5 Q100.9,49.4 103.3,28.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M98.6,60.5 Q84.1,74.5 64.3,80.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M73.8,183.8 Q89.3,172.8 103.3,171.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.55" strokeLinecap="round" />
+          <path d="M73.8,183.8 Q59.1,169.7 39.5,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.50" strokeLinecap="round" />
+          <path d="M158.7,60.5 Q167.1,72.2 184.6,80.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.55" strokeLinecap="round" />
+          <path d="M158.7,60.5 Q146.3,48.1 140.5,28.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.57" strokeLinecap="round" />
+          <path d="M34.8,68.0 Q53.9,76.4 64.3,80.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M34.8,68.0 Q41.1,55.0 39.5,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.54" strokeLinecap="round" />
+          <path d="M148.1,16.2 Q141.9,26.6 140.5,28.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.47" strokeLinecap="round" />
+          <path d="M148.1,16.2 Q157.9,29.9 174.0,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.37" strokeLinecap="round" />
+          <path d="M34.8,132.0 Q41.1,145.0 39.5,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.54" strokeLinecap="round" />
+          <path d="M34.8,132.0 Q53.9,123.6 64.3,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M192.2,68.0 Q183.7,75.5 184.6,80.2" fill="none" stroke="white" strokeWidth="0.45" opacity="0.45" strokeLinecap="round" />
+          <path d="M192.2,68.0 Q178.9,54.5 174.0,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M98.6,139.5 Q100.9,150.6 103.3,171.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M98.6,139.5 Q84.1,125.5 64.3,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M148.1,183.8 Q141.9,173.4 140.5,171.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.47" strokeLinecap="round" />
+          <path d="M148.1,183.8 Q157.9,170.1 174.0,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.37" strokeLinecap="round" />
+          <path d="M192.2,132.0 Q178.9,145.5 174.0,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.35" strokeLinecap="round" />
+          <path d="M192.2,132.0 Q183.7,124.5 184.6,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.45" strokeLinecap="round" />
+          <path d="M158.7,139.5 Q146.3,151.9 140.5,171.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.57" strokeLinecap="round" />
+          <path d="M158.7,139.5 Q167.1,127.8 184.6,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.55" strokeLinecap="round" />
+          <path d="M26.0,36.0 Q36.3,39.4 39.5,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.44" strokeLinecap="round" />
+          <path d="M103.3,28.5 Q120.5,33.1 140.5,28.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.56" strokeLinecap="round" />
+          <path d="M26.0,164.0 Q36.3,160.6 39.5,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.44" strokeLinecap="round" />
+          <path d="M160.5,36.0 Q163.7,39.4 174.0,36.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.26" strokeLinecap="round" />
+          <path d="M64.3,80.2 Q69.2,100.0 64.3,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.60" strokeLinecap="round" />
+          <path d="M103.3,171.5 Q120.5,166.9 140.5,171.5" fill="none" stroke="white" strokeWidth="0.45" opacity="0.56" strokeLinecap="round" />
+          <path d="M160.5,164.0 Q163.7,160.6 174.0,164.0" fill="none" stroke="white" strokeWidth="0.45" opacity="0.26" strokeLinecap="round" />
+          <path d="M184.6,80.2 Q179.7,100.0 184.6,119.8" fill="none" stroke="white" strokeWidth="0.45" opacity="0.51" strokeLinecap="round" />
+          {/* 五边形面（深度排序，背面到前面） */}
+          <polygon points="7.8,68.0 3.0,100.0 7.8,132.0 15.4,119.8 15.4,80.2" fill="rgba(255,255,255,0.020)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="118.6,4.0 126.2,16.2 160.5,36.0 174.0,36.0 148.1,16.2" fill="rgba(255,255,255,0.020)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="160.5,164.0 126.2,183.8 118.6,196.0 148.1,183.8 174.0,164.0" fill="rgba(255,255,255,0.020)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="39.5,164.0 73.8,183.8 81.4,196.0 51.9,183.8 26.0,164.0" fill="rgba(255,255,255,0.040)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="81.4,4.0 73.8,16.2 39.5,36.0 26.0,36.0 51.9,16.2" fill="rgba(255,255,255,0.040)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="192.2,68.0 197.0,100.0 192.2,132.0 184.6,119.8 184.6,80.2" fill="rgba(255,255,255,0.041)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          {/* 六边形面 */}
+          <polygon points="39.5,36.0 34.8,68.0 16.6,100.0 3.0,100.0 7.8,68.0 26.0,36.0" fill="rgba(255,255,255,0.048)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="16.6,100.0 34.8,132.0 39.5,164.0 26.0,164.0 7.8,132.0 3.0,100.0" fill="rgba(255,255,255,0.048)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="81.4,4.0 118.6,4.0 148.1,16.2 140.5,28.5 103.3,28.5 73.8,16.2" fill="rgba(255,255,255,0.048)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="73.8,183.8 103.3,171.5 140.5,171.5 148.1,183.8 118.6,196.0 81.4,196.0" fill="rgba(255,255,255,0.048)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="148.1,16.2 174.0,36.0 192.2,68.0 184.6,80.2 158.7,60.5 140.5,28.5" fill="rgba(255,255,255,0.049)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="192.2,132.0 174.0,164.0 148.1,183.8 140.5,171.5 158.7,139.5 184.6,119.8" fill="rgba(255,255,255,0.049)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="103.3,28.5 98.6,60.5 64.3,80.2 34.8,68.0 39.5,36.0 73.8,16.2" fill="rgba(255,255,255,0.071)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="64.3,119.8 98.6,139.5 103.3,171.5 73.8,183.8 39.5,164.0 34.8,132.0" fill="rgba(255,255,255,0.071)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="184.6,80.2 184.6,119.8 158.7,139.5 132.8,119.8 132.8,80.2 158.7,60.5" fill="rgba(255,255,255,0.071)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
           {/* 中心五边形 */}
-          <polygon points="100,60 124,74 116,102 84,102 76,74" fill="rgba(255,255,255,0.1)" stroke="white" strokeWidth="0.8" />
-          {/* 上 */}
-          <line x1="100" y1="60" x2="100" y2="30" stroke="white" strokeWidth="0.6" />
-          <line x1="124" y1="74" x2="148" y2="50" stroke="white" strokeWidth="0.6" />
-          <line x1="76" y1="74" x2="52" y2="50" stroke="white" strokeWidth="0.6" />
-          {/* 下 */}
-          <line x1="116" y1="102" x2="140" y2="130" stroke="white" strokeWidth="0.6" />
-          <line x1="84" y1="102" x2="60" y2="130" stroke="white" strokeWidth="0.6" />
-          {/* 外圈五边形轮廓 */}
-          <polygon points="100,30 148,50 140,130 60,130 52,50" fill="none" stroke="white" strokeWidth="0.4" strokeDasharray="4 3" />
-          {/* 额外缝线 */}
-          <line x1="148" y1="50" x2="170" y2="90" stroke="white" strokeWidth="0.4" />
-          <line x1="52" y1="50" x2="30" y2="90" stroke="white" strokeWidth="0.4" />
-          <line x1="140" y1="130" x2="160" y2="165" stroke="white" strokeWidth="0.4" />
-          <line x1="60" y1="130" x2="40" y2="165" stroke="white" strokeWidth="0.4" />
+          <polygon points="64.3,80.2 64.3,119.8 34.8,132.0 16.6,100.0 34.8,68.0" fill="rgba(255,255,255,0.074)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          {/* 正面六边形 */}
+          <polygon points="140.5,28.5 158.7,60.5 132.8,80.2 98.6,60.5 103.3,28.5" fill="rgba(255,255,255,0.075)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="132.8,119.8 158.7,139.5 140.5,171.5 103.3,171.5 98.6,139.5" fill="rgba(255,255,255,0.075)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
+          <polygon points="132.8,80.2 132.8,119.8 98.6,139.5 64.3,119.8 64.3,80.2 98.6,60.5" fill="rgba(255,255,255,0.080)" stroke="white" strokeWidth="0.65" strokeLinejoin="round" />
         </svg>
         {/* 高光 */}
         <div
@@ -113,11 +177,17 @@ export default function LandingPage() {
             SOCCER<span className="text-primary"> BOARD</span>
           </span>
         </div>
-        <Link href="/dashboard/">
-          <Button variant="outline" size="sm" className="border-white/10 bg-white/5 hover:bg-white/10 text-white">
-            进入系统
-          </Button>
-        </Link>
+        <a
+          href="https://github.com/Beta-lyr/soccer-board"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm text-white/50 hover:text-white/80 transition-colors"
+        >
+          <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+          </svg>
+          GitHub
+        </a>
       </nav>
 
       {/* Hero */}
@@ -143,22 +213,12 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="mt-10 flex flex-col sm:flex-row gap-3">
+        <div className="mt-10">
           <Link href="/dashboard/">
             <Button size="lg" className="text-base px-8 bg-gradient-to-r from-primary to-indigo-500 hover:from-primary/90 hover:to-indigo-500/90 shadow-lg shadow-primary/25">
               进入系统 <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Button size="lg" variant="outline" className="text-base px-8 border-white/10 bg-white/5 hover:bg-white/10 text-white/80">
-            <Play className="mr-2 h-4 w-4" /> 了解更多
-          </Button>
-        </div>
-
-        {/* 向下箭头 */}
-        <div className="absolute bottom-8 animate-bounce">
-          <div className="w-5 h-8 rounded-full border border-white/20 flex items-start justify-center p-1">
-            <div className="w-1 h-2 rounded-full bg-white/40" />
-          </div>
         </div>
       </section>
 

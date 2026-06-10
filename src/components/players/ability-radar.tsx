@@ -10,24 +10,26 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { motion } from "framer-motion";
+import { useI18n } from "@/lib/i18n";
 import type { PlayerAbilities } from "@/types";
 
-const LABELS: Record<keyof PlayerAbilities, string> = {
-  speed: "速度",
-  shooting: "射门",
-  passing: "传球",
-  defending: "防守",
-  stamina: "体能",
-  awareness: "意识",
-};
-
 export function AbilityRadar({ abilities }: { abilities: PlayerAbilities }) {
+  const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 100);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setMounted(true), 100);
+    return () => clearTimeout(timer);
   }, []);
+
+  const LABELS: Record<keyof PlayerAbilities, string> = {
+    speed: t("players.speed"),
+    shooting: t("players.shooting"),
+    passing: t("players.passing"),
+    defending: t("players.defending"),
+    stamina: t("players.stamina"),
+    awareness: t("players.awareness"),
+  };
 
   const data = (Object.keys(LABELS) as (keyof PlayerAbilities)[]).map((key) => ({
     subject: LABELS[key],
@@ -51,6 +53,7 @@ export function AbilityRadar({ abilities }: { abilities: PlayerAbilities }) {
           <PolarRadiusAxis
             angle={30}
             domain={[0, 10]}
+            tickCount={6}
             tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
           />
           <Radar
