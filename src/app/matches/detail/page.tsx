@@ -163,8 +163,8 @@ function MatchDetailContent() {
               <CardContent className="space-y-4">
                 {/* 计时器 */}
                 <div className="flex items-center justify-center gap-4">
-                  <div className="text-5xl font-black tabular-nums w-32 text-center">
-                    {String(timer.minute).padStart(2, "0")}:00
+                  <div className="text-5xl font-black tabular-nums w-40 text-center">
+                    {timer.displayTime}
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" variant={timer.isRunning ? "destructive" : "default"} onClick={() => timer.isRunning ? timer.pause() : timer.start()}>
