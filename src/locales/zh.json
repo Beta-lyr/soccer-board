@@ -165,5 +165,15 @@
     "title": "日程日历",
     "desc": "月视图查看所有安排",
     "developing": "日历开发中"
+  },
+  "login": {
+    "title": "登录",
+    "desc": "请输入密码进入系统",
+    "password": "密码",
+    "placeholder": "请输入密码",
+    "submit": "进入系统",
+    "error": "密码错误，请重试",
+    "logout": "退出登录",
+    "logoutSuccess": "已退出登录"
   }
 }

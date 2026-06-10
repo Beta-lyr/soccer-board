@@ -20,17 +20,14 @@ import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitch } from "./language-switch";
 import { useI18n } from "@/lib/i18n";
+import { useAuth } from "@/hooks/use-auth";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
+  const { logout } = useAuth();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/login/";
-  };
 
   const NAV_ITEMS = [
     { href: "/dashboard/", label: t("common.dashboard"), icon: LayoutDashboard },
@@ -154,7 +151,7 @@ export function Sidebar() {
             <LanguageSwitch />
             <ThemeToggle />
             <button
-              onClick={handleLogout}
+              onClick={logout}
               className="p-1.5 text-sidebar-foreground/40 hover:text-sidebar-foreground/80 transition-colors"
               title="退出登录"
             >
