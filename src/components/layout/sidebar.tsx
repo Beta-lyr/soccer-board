@@ -14,6 +14,7 @@ import {
   Calendar,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./theme-toggle";
@@ -25,6 +26,11 @@ export function Sidebar() {
   const pathname = usePathname();
   const { t } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login/";
+  };
 
   const NAV_ITEMS = [
     { href: "/", label: t("common.dashboard"), icon: LayoutDashboard },
@@ -150,6 +156,13 @@ export function Sidebar() {
           <div className="flex items-center gap-1">
             <LanguageSwitch />
             <ThemeToggle />
+            <button
+              onClick={handleLogout}
+              className="p-1.5 text-sidebar-foreground/40 hover:text-sidebar-foreground/80 transition-colors"
+              title="退出登录"
+            >
+              <LogOut className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </aside>
