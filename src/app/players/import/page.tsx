@@ -150,7 +150,9 @@ export default function ImportPlayersPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
+                  // 添加 UTF-8 BOM 头，确保 Windows Excel 正确识别中文编码
+                  const BOM = "﻿";
+                  const blob = new Blob([BOM + CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
                   const link = document.createElement("a");
                   link.href = URL.createObjectURL(blob);
                   link.download = "player-import-template.csv";
