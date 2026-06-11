@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,7 +12,6 @@ import { LogIn, Eye, EyeOff } from "lucide-react";
 function LoginForm() {
   const { t } = useI18n();
   const { login } = useAuth();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const returnTo = searchParams.get("returnTo") || "/dashboard/";
 
@@ -33,12 +32,15 @@ function LoginForm() {
     const result = await login(password.trim());
 
     if (result.success) {
+      // 使用 window.location.href 做全页面跳转，确保 cookie 被正确发送
+      // router.replace() 在某些场景下（如 middleware 302 后）可能不触发完整导航
       const safeReturnTo = decodeURIComponent(returnTo);
-      router.replace(safeReturnTo.startsWith("/") ? safeReturnTo : "/dashboard/");
+      const target = safeReturnTo.startsWith("/") ? safeReturnTo : "/dashboard/";
+      window.location.href = target;
     } else {
       setError(result.error || t("login.error"));
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

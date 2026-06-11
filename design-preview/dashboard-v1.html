@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Soccer Board - 仪表盘</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwindcss.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            primary: '#22c55e',
+            accent: '#f59e0b',
+            surface: {
+              DEFAULT: '#1e1e2e',
+              light: '#2a2a3e',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    body { font-family: 'Inter', sans-serif; }
+    .card-gradient {
+      background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px rgba(34, 197, 94, 0.15);
+    }
+    .progress-bar {
+      background: linear-gradient(90deg, #22c55e, #16a34a);
+    }
+    .badge {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+    }
+  </style>
+</head>
+<body class="bg-[#0f0f1a] min-h-screen">
+  <!-- 侧边栏 -->
+  <aside class="fixed left-0 top-0 h-full w-64 bg-[#1a1a2e] border-r border-white/5 p-4 z-50">
+    <div class="flex items-center gap-3 mb-8 px-2">
+      <div class="w-10 h-10 bg-gradient-to-br from-primary to-emerald-600 rounded-xl flex items-center justify-center">
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <circle cx="12" cy="12" r="10" stroke-width="2"/>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke-width="2"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-white font-bold text-lg">Soccer Board</h1>
+        <p class="text-gray-500 text-xs">球队管理系统</p>
+      </div>
+    </div>
+
+    <nav class="space-y-1">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 bg-primary/10 text-primary rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        <span class="font-medium">仪表盘</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+        </svg>
+        <span>球员管理</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span>比赛管理</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span>战术板</span>
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+        </svg>
+        <span>阵型管理</span>
+      </a>
+    </nav>
+
+    <!-- 底部用户信息 -->
+    <div class="absolute bottom-4 left-4 right-4">
+      <div class="flex items-center gap-3 p-3 bg-white/5 rounded-xl">
+        <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full"></div>
+        <div class="flex-1">
+          <p class="text-white text-sm font-medium">教练组</p>
+          <p class="text-gray-500 text-xs">在线</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容区 -->
+  <main class="ml-64 p-8">
+    <!-- 顶部栏 -->
+    <header class="flex items-center justify-between mb-8">
+      <div>
+        <h2 class="text-2xl font-bold text-white">欢迎回来，教练 👋</h2>
+        <p class="text-gray-500 mt-1">这是你的球队概览，今天是周三，2024年1月15日</p>
+      </div>
+      <div class="flex items-center gap-4">
+        <button class="relative p-2 text-gray-400 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+        <button class="p-2 text-gray-400 hover:text-white transition-colors">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 统计卡片 -->
+    <div class="grid grid-cols-4 gap-6 mb-8">
+      <!-- 球员总数 -->
+      <div class="stat-card card-gradient bg-[#1e1e2e] rounded-2xl p-6 border border-white/5 transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <span class="badge px-2 py-1 text-xs text-white rounded-full">+3 本月</span>
+        </div>
+        <h3 class="text-3xl font-bold text-white mb-1">24</h3>
+        <p class="text-gray-500 text-sm">注册球员</p>
+      </div>
+
+      <!-- 本月比赛 -->
+      <div class="stat-card card-gradient bg-[#1e1e2e] rounded-2xl p-6 border border-white/5 transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <span class="text-blue-500 text-xs font-medium">进行中</span>
+        </div>
+        <h3 class="text-3xl font-bold text-white mb-1">6</h3>
+        <p class="text-gray-500 text-sm">本月比赛</p>
+      </div>
+
+      <!-- 胜率 -->
+      <div class="stat-card card-gradient bg-[#1e1e2e] rounded-2xl p-6 border border-white/5 transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-accent/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <span class="text-accent text-xs font-medium">↑ 12%</span>
+        </div>
+        <h3 class="text-3xl font-bold text-white mb-1">67%</h3>
+        <p class="text-gray-500 text-sm">赛季胜率</p>
+      </div>
+
+      <!-- 训练完成 -->
+      <div class="stat-card card-gradient bg-[#1e1e2e] rounded-2xl p-6 border border-white/5 transition-all duration-300">
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center">
+            <svg class="w-6 h-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+          </div>
+          <span class="text-purple-500 text-xs font-medium">本周</span>
+        </div>
+        <h3 class="text-3xl font-bold text-white mb-1">12</h3>
+        <p class="text-gray-500 text-sm">训练课程</p>
+      </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="grid grid-cols-3 gap-6">
+      <!-- 左侧：近期比赛 -->
+      <div class="col-span-2 bg-[#1e1e2e] rounded-2xl border border-white/5 p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-white">近期比赛</h3>
+          <button class="text-primary text-sm hover:text-primary/80 transition-colors">查看全部</button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 比赛 1 -->
+          <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-sm text-gray-500">周六 14:00</span>
+                <span class="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">主场</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
+                  <span class="text-white font-medium">我方队</span>
+                </div>
+                <div class="flex items-center gap-2 text-2xl font-bold">
+                  <span class="text-white">3</span>
+                  <span class="text-gray-600">:</span>
+                  <span class="text-white">1</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">对手 A</span>
+                  <div class="w-8 h-8 bg-red-600 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-green-400 text-sm font-medium">胜</span>
+            </div>
+          </div>
+
+          <!-- 比赛 2 -->
+          <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-sm text-gray-500">下周三 19:00</span>
+                <span class="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full">客场</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
+                  <span class="text-white font-medium">我方队</span>
+                </div>
+                <div class="flex items-center gap-2 text-lg">
+                  <span class="text-gray-500">vs</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">对手 B</span>
+                  <div class="w-8 h-8 bg-yellow-600 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-orange-400 text-sm font-medium">即将开始</span>
+            </div>
+          </div>
+
+          <!-- 比赛 3 -->
+          <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-sm text-gray-500">上周六 15:30</span>
+                <span class="px-2 py-0.5 bg-green-500/20 text-green-400 text-xs rounded-full">主场</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
+                  <span class="text-white font-medium">我方队</span>
+                </div>
+                <div class="flex items-center gap-2 text-2xl font-bold">
+                  <span class="text-white">1</span>
+                  <span class="text-gray-600">:</span>
+                  <span class="text-white">1</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">对手 C</span>
+                  <div class="w-8 h-8 bg-gray-600 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-yellow-400 text-sm font-medium">平</span>
+            </div>
+          </div>
+
+          <!-- 比赛 4 -->
+          <div class="flex items-center gap-4 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-colors">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-sm text-gray-500">上上周六 14:00</span>
+                <span class="px-2 py-0.5 bg-orange-500/20 text-orange-400 text-xs rounded-full">客场</span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
+                  <span class="text-white font-medium">我方队</span>
+                </div>
+                <div class="flex items-center gap-2 text-2xl font-bold">
+                  <span class="text-white">2</span>
+                  <span class="text-gray-600">:</span>
+                  <span class="text-white">0</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">对手 D</span>
+                  <div class="w-8 h-8 bg-purple-600 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-green-400 text-sm font-medium">胜</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：球员排名 -->
+      <div class="bg-[#1e1e2e] rounded-2xl border border-white/5 p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-lg font-semibold text-white">球员排名</h3>
+          <button class="text-primary text-sm hover:text-primary/80 transition-colors">更多</button>
+        </div>
+
+        <div class="space-y-4">
+          <!-- 球员 1 -->
+          <div class="flex items-center gap-3">
+            <span class="text-yellow-400 font-bold text-lg w-6">1</span>
+            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full"></div>
+            <div class="flex-1">
+              <p class="text-white font-medium">张三</p>
+              <p class="text-gray-500 text-xs">前锋 · 12 球</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-white text-sm">8.5</span>
+            </div>
+          </div>
+
+          <!-- 球员 2 -->
+          <div class="flex items-center gap-3">
+            <span class="text-gray-400 font-bold text-lg w-6">2</span>
+            <div class="w-10 h-10 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full"></div>
+            <div class="flex-1">
+              <p class="text-white font-medium">李四</p>
+              <p class="text-gray-500 text-xs">中场 · 8 助攻</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-white text-sm">8.2</span>
+            </div>
+          </div>
+
+          <!-- 球员 3 -->
+          <div class="flex items-center gap-3">
+            <span class="text-orange-400 font-bold text-lg w-6">3</span>
+            <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-full"></div>
+            <div class="flex-1">
+              <p class="text-white font-medium">王五</p>
+              <p class="text-gray-500 text-xs">后卫 · 15 次抢断</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-white text-sm">7.9</span>
+            </div>
+          </div>
+
+          <!-- 球员 4 -->
+          <div class="flex items-center gap-3">
+            <span class="text-gray-500 font-bold text-lg w-6">4</span>
+            <div class="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full"></div>
+            <div class="flex-1">
+              <p class="text-white font-medium">赵六</p>
+              <p class="text-gray-500 text-xs">门将 · 5 次零封</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-white text-sm">7.6</span>
+            </div>
+          </div>
+
+          <!-- 球员 5 -->
+          <div class="flex items-center gap-3">
+            <span class="text-gray-500 font-bold text-lg w-6">5</span>
+            <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-500 rounded-full"></div>
+            <div class="flex-1">
+              <p class="text-white font-medium">钱七</p>
+              <p class="text-gray-500 text-xs">前锋 · 6 球</p>
+            </div>
+            <div class="flex items-center gap-1">
+              <svg class="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+              </svg>
+              <span class="text-white text-sm">7.4</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部：快速操作 -->
+    <div class="mt-6 grid grid-cols-4 gap-4">
+      <button class="flex items-center justify-center gap-3 p-4 bg-gradient-to-r from-primary to-emerald-600 rounded-2xl hover:shadow-lg hover:shadow-primary/25 transition-all duration-300">
+        <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+        </svg>
+        <span class="text-white font-medium">添加球员</span>
+      </button>
+      <button class="flex items-center justify-center gap-3 p-4 bg-[#1e1e2e] border border-white/10 rounded-2xl hover:bg-white/5 transition-all duration-300">
+        <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+        <span class="text-white font-medium">安排比赛</span>
+      </button>
+      <button class="flex items-center justify-center gap-3 p-4 bg-[#1e1e2e] border border-white/10 rounded-2xl hover:bg-white/5 transition-all duration-300">
+        <svg class="w-5 h-5 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="text-white font-medium">打开战术板</span>
+      </button>
+      <button class="flex items-center justify-center gap-3 p-4 bg-[#1e1e2e] border border-white/10 rounded-2xl hover:bg-white/5 transition-all duration-300">
+        <svg class="w-5 h-5 text-orange-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+        </svg>
+        <span class="text-white font-medium">新建训练</span>
+      </button>
+    </div>
+  </main>
+</body>
+</html>
