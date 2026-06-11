@@ -97,14 +97,14 @@ export default function StatsPage() {
   const goalsAgainst = finishedMatches.reduce((s, m) => s + (m.score?.away ?? 0), 0);
 
   const recordData = [
-    { name: "胜", value: wins, color: "#22c55e" },
-    { name: "平", value: draws, color: "#f59e0b" },
-    { name: "负", value: losses, color: "#ef4444" },
+    { name: t("stats.win"), value: wins, color: "#22c55e" },
+    { name: t("stats.draw"), value: draws, color: "#f59e0b" },
+    { name: t("stats.loss"), value: losses, color: "#ef4444" },
   ].filter((d) => d.value > 0);
 
   const goalsData = [
-    { name: "进球", value: goalsFor },
-    { name: "失球", value: goalsAgainst },
+    { name: t("stats.goals"), value: goalsFor },
+    { name: t("stats.conceded"), value: goalsAgainst },
   ];
 
   return (
@@ -113,12 +113,12 @@ export default function StatsPage() {
       <div className="flex-1 p-4 md:p-6 space-y-4">
         {/* 赛事筛选 */}
         <div className="flex items-center gap-3">
-          <span className="text-xs text-muted-foreground">筛选:</span>
+          <span className="text-xs text-muted-foreground">{t("stats.filter")}:</span>
           <Select value={filterId} onValueChange={(v) => v && setFilterId(v)}>
             <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">全部比赛</SelectItem>
-              <SelectItem value="no-comp">非赛事比赛</SelectItem>
+              <SelectItem value="all">{t("stats.allMatches")}</SelectItem>
+              <SelectItem value="no-comp">{t("stats.noCompMatches")}</SelectItem>
               {competitions.map((c) => (
                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
               ))}
@@ -128,16 +128,16 @@ export default function StatsPage() {
 
         <Tabs defaultValue="players" className="space-y-4">
           <TabsList>
-            <TabsTrigger value="players">球员排行</TabsTrigger>
-            <TabsTrigger value="team">球队统计</TabsTrigger>
-            <TabsTrigger value="competitions">赛事统计</TabsTrigger>
+            <TabsTrigger value="players">{t("stats.playerRanking")}</TabsTrigger>
+            <TabsTrigger value="team">{t("stats.teamStats")}</TabsTrigger>
+            <TabsTrigger value="competitions">{t("stats.compStats")}</TabsTrigger>
           </TabsList>
 
           {/* 球员排行 */}
           <TabsContent value="players">
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               <Card>
-                <CardHeader><CardTitle className="text-sm">球员数据排行</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-sm">{t("stats.playerRanking")}</CardTitle></CardHeader>
                 <CardContent>
                   {playerStats.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">{t("stats.noStats")}</p>
@@ -146,14 +146,14 @@ export default function StatsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-8">#</TableHead>
-                            <TableHead>球员</TableHead>
-                            <TableHead className="text-center">出场</TableHead>
-                            <TableHead className="text-center">进球</TableHead>
-                            <TableHead className="text-center">助攻</TableHead>
-                            <TableHead className="text-center">黄牌</TableHead>
-                            <TableHead className="text-center">红牌</TableHead>
-                            <TableHead className="text-center">评分</TableHead>
+                            <TableHead className="w-8">{t("stats.rank")}</TableHead>
+                            <TableHead>{t("stats.player")}</TableHead>
+                            <TableHead className="text-center">{t("stats.appearances")}</TableHead>
+                            <TableHead className="text-center">{t("stats.goals")}</TableHead>
+                            <TableHead className="text-center">{t("stats.assists")}</TableHead>
+                            <TableHead className="text-center">{t("stats.yellowCards")}</TableHead>
+                            <TableHead className="text-center">{t("stats.redCards")}</TableHead>
+                            <TableHead className="text-center">{t("stats.rating")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -190,10 +190,10 @@ export default function StatsPage() {
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
-                  { label: "总场次", value: finishedMatches.length },
-                  { label: "胜率", value: finishedMatches.length > 0 ? `${Math.round((wins / finishedMatches.length) * 100)}%` : "-" },
-                  { label: "总进球", value: goalsFor },
-                  { label: "总失球", value: goalsAgainst },
+                  { label: t("stats.totalMatches"), value: finishedMatches.length },
+                  { label: t("stats.winRate"), value: finishedMatches.length > 0 ? `${Math.round((wins / finishedMatches.length) * 100)}%` : "-" },
+                  { label: t("stats.totalGoalsFor"), value: goalsFor },
+                  { label: t("stats.totalGoalsAgainst"), value: goalsAgainst },
                 ].map((stat) => (
                   <Card key={stat.label}>
                     <CardContent className="p-4 text-center">
@@ -206,10 +206,10 @@ export default function StatsPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card>
-                  <CardHeader><CardTitle className="text-sm">战绩分布</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm">{t("stats.record")}</CardTitle></CardHeader>
                   <CardContent>
                     {recordData.length === 0 ? (
-                      <p className="text-sm text-muted-foreground text-center py-8">暂无数据</p>
+                      <p className="text-sm text-muted-foreground text-center py-8">{t("stats.noData")}</p>
                     ) : (
                       <ResponsiveContainer width="100%" height={200}>
                         <PieChart>
@@ -226,7 +226,7 @@ export default function StatsPage() {
                 </Card>
 
                 <Card>
-                  <CardHeader><CardTitle className="text-sm">进失球对比</CardTitle></CardHeader>
+                  <CardHeader><CardTitle className="text-sm">{t("stats.goalsComparison")}</CardTitle></CardHeader>
                   <CardContent>
                     <ResponsiveContainer width="100%" height={200}>
                       <BarChart data={goalsData}>
@@ -246,7 +246,7 @@ export default function StatsPage() {
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-sm flex items-center gap-2">
-                      <Users className="h-4 w-4" />各队对比（校内比赛）
+                      <Users className="h-4 w-4" />{t("stats.teamComparison")}
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -254,16 +254,16 @@ export default function StatsPage() {
                       <Table>
                         <TableHeader>
                           <TableRow>
-                            <TableHead className="w-8">#</TableHead>
-                            <TableHead>队伍</TableHead>
-                            <TableHead className="text-center">场</TableHead>
-                            <TableHead className="text-center">胜</TableHead>
-                            <TableHead className="text-center">平</TableHead>
-                            <TableHead className="text-center">负</TableHead>
-                            <TableHead className="text-center">进</TableHead>
-                            <TableHead className="text-center">失</TableHead>
-                            <TableHead className="text-center">净</TableHead>
-                            <TableHead className="text-center font-bold">分</TableHead>
+                            <TableHead className="w-8">{t("stats.rank")}</TableHead>
+                            <TableHead>{t("stats.team")}</TableHead>
+                            <TableHead className="text-center">{t("stats.played")}</TableHead>
+                            <TableHead className="text-center">{t("stats.wins")}</TableHead>
+                            <TableHead className="text-center">{t("stats.draws")}</TableHead>
+                            <TableHead className="text-center">{t("stats.losses")}</TableHead>
+                            <TableHead className="text-center">{t("stats.gf")}</TableHead>
+                            <TableHead className="text-center">{t("stats.ga")}</TableHead>
+                            <TableHead className="text-center">{t("stats.gd")}</TableHead>
+                            <TableHead className="text-center font-bold">{t("stats.pts")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -297,7 +297,7 @@ export default function StatsPage() {
                 <Card>
                   <CardContent className="py-12 text-center text-muted-foreground">
                     <Trophy className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                    <p className="text-sm">暂无赛事数据</p>
+                    <p className="text-sm">{t("stats.noData")}</p>
                   </CardContent>
                 </Card>
               ) : (
@@ -339,7 +339,7 @@ export default function StatsPage() {
                             {comp.name}
                           </CardTitle>
                           <span className="text-xs text-muted-foreground">
-                            {comp.type === "league" ? "联赛" : "杯赛"} · {comp.teams.length} 队
+                            {comp.type === "league" ? t("comp.league") : t("comp.cup")} · {comp.teams.length} {t("stats.team")}
                           </span>
                         </div>
                       </CardHeader>
@@ -347,21 +347,21 @@ export default function StatsPage() {
                         <div className="grid grid-cols-3 gap-3">
                           <div className="text-center">
                             <p className="text-lg font-bold">{compFinished.length}/{compMatches.length}</p>
-                            <p className="text-[10px] text-muted-foreground">已完成/总场次</p>
+                            <p className="text-[10px] text-muted-foreground">{t("stats.finished")}/{t("stats.totalMatches")}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-lg font-bold">{compGoals}</p>
-                            <p className="text-[10px] text-muted-foreground">总进球</p>
+                            <p className="text-[10px] text-muted-foreground">{t("stats.totalGoals")}</p>
                           </div>
                           <div className="text-center">
                             <p className="text-lg font-bold">{avgGoals}</p>
-                            <p className="text-[10px] text-muted-foreground">场均进球</p>
+                            <p className="text-[10px] text-muted-foreground">{t("stats.avgGoals")}</p>
                           </div>
                         </div>
 
                         {topScorers.length > 0 && (
                           <div>
-                            <p className="text-xs text-muted-foreground mb-1.5">射手榜</p>
+                            <p className="text-xs text-muted-foreground mb-1.5">{t("stats.scorers")}</p>
                             <div className="flex flex-wrap gap-2">
                               {topScorers.map((s, i) => (
                                 <span key={i} className="text-xs px-2 py-1 rounded bg-muted">
@@ -386,22 +386,22 @@ export default function StatsPage() {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <TrendingUp className="h-4 w-4" />其他比赛（友谊赛/训练赛）
+                        <TrendingUp className="h-4 w-4" />{t("stats.otherMatches")}
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-3 gap-3">
                         <div className="text-center">
                           <p className="text-lg font-bold">{noCompFinished.length}/{noCompMatches.length}</p>
-                          <p className="text-[10px] text-muted-foreground">已完成/总场次</p>
+                          <p className="text-[10px] text-muted-foreground">{t("stats.finished")}/{t("stats.totalMatches")}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-lg font-bold">{noCompFinished.reduce((s, m) => s + (m.score?.home ?? 0) + (m.score?.away ?? 0), 0)}</p>
-                          <p className="text-[10px] text-muted-foreground">总进球</p>
+                          <p className="text-[10px] text-muted-foreground">{t("stats.totalGoals")}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-lg font-bold">{noCompFinished.length > 0 ? (noCompFinished.reduce((s, m) => s + (m.score?.home ?? 0) + (m.score?.away ?? 0), 0) / noCompFinished.length).toFixed(1) : "-"}</p>
-                          <p className="text-[10px] text-muted-foreground">场均进球</p>
+                          <p className="text-[10px] text-muted-foreground">{t("stats.avgGoals")}</p>
                         </div>
                       </div>
                     </CardContent>
