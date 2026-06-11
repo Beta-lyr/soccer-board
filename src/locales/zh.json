@@ -210,7 +210,8 @@
     "assists": "助攻",
     "yellowCards": "黄牌",
     "redCards": "红牌",
-    "rating": "评分"
+    "rating": "评分",
+    "goalsUnit": "球"
   },
   "training": {
     "title": "训练管理",

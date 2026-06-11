@@ -210,7 +210,8 @@
     "assists": "A",
     "yellowCards": "YC",
     "redCards": "RC",
-    "rating": "Rating"
+    "rating": "Rating",
+    "goalsUnit": " goals"
   },
   "training": {
     "title": "Training",

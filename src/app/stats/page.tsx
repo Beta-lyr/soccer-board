@@ -97,9 +97,9 @@ export default function StatsPage() {
   const goalsAgainst = finishedMatches.reduce((s, m) => s + (m.score?.away ?? 0), 0);
 
   const recordData = [
-    { name: t("stats.win"), value: wins, color: "#22c55e" },
-    { name: t("stats.draw"), value: draws, color: "#f59e0b" },
-    { name: t("stats.loss"), value: losses, color: "#ef4444" },
+    { name: t("stats.wins"), value: wins, color: "#22c55e" },
+    { name: t("stats.draws"), value: draws, color: "#f59e0b" },
+    { name: t("stats.losses"), value: losses, color: "#ef4444" },
   ].filter((d) => d.value > 0);
 
   const goalsData = [
@@ -365,7 +365,7 @@ export default function StatsPage() {
                             <div className="flex flex-wrap gap-2">
                               {topScorers.map((s, i) => (
                                 <span key={i} className="text-xs px-2 py-1 rounded bg-muted">
-                                  {s.name}({s.team}) {s.goals}球
+                                  {s.name}({s.team}) {s.goals}{t("stats.goalsUnit")}
                                 </span>
                               ))}
                             </div>
