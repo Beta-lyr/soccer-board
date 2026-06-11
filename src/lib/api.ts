@@ -3,6 +3,7 @@
  */
 
 import Dexie, { type Table } from "dexie";
+import { emitRefresh } from "./refresh-bus";
 
 type TableName = "players" | "tactics" | "lineupTemplates" | "matches" | "competitions" | "teams" | "trainings";
 
@@ -91,6 +92,7 @@ export function createApiClient<T extends { id: string }>(table: TableName) {
       const now = new Date().toISOString();
       if (useLocal) {
         await getTable().add({ ...data, id, createdAt: now, updatedAt: now });
+        emitRefresh();
         return id;
       }
       const result = await request<{ id: string }>(base, {
@@ -98,6 +100,7 @@ export function createApiClient<T extends { id: string }>(table: TableName) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      emitRefresh();
       return result.id;
     },
 
@@ -105,6 +108,7 @@ export function createApiClient<T extends { id: string }>(table: TableName) {
       await ensureMode();
       if (useLocal) {
         await getTable().update(id, { ...data, updatedAt: new Date().toISOString() });
+        emitRefresh();
         return;
       }
       await request(`${base}/${id}`, {
@@ -112,15 +116,18 @@ export function createApiClient<T extends { id: string }>(table: TableName) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
+      emitRefresh();
     },
 
     async remove(id: string): Promise<void> {
       await ensureMode();
       if (useLocal) {
         await getTable().delete(id);
+        emitRefresh();
         return;
       }
       await request(`${base}/${id}`, { method: "DELETE" });
+      emitRefresh();
     },
   };
 }
