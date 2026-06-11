@@ -21,11 +21,11 @@ import type { MatchType, MatchScope, MatchLineupEntry } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-const TYPE_OPTIONS: { value: MatchType; label: string }[] = [
-  { value: "league", label: "联赛" },
-  { value: "cup", label: "杯赛" },
-  { value: "friendly", label: "友谊赛" },
-  { value: "training", label: "训练赛" },
+const TYPE_OPTIONS: { value: MatchType; key: string }[] = [
+  { value: "league", key: "matches.league" },
+  { value: "cup", key: "matches.cup" },
+  { value: "friendly", key: "matches.friendly" },
+  { value: "training", key: "matches.training" },
 ];
 
 export default function NewMatchPage() {
@@ -88,7 +88,7 @@ export default function NewMatchPage() {
 
   const handleSubmit = async () => {
     if (scope === "external") {
-      if (!opponent) { toast.error("请输入对手名称"); return; }
+      if (!opponent) { toast.error(t("matches.enterOpponentName")); return; }
       await addMatch({
         date: `${date}T${time}`,
         opponent,
@@ -104,9 +104,9 @@ export default function NewMatchPage() {
         competitionId: competitionId || undefined,
       });
     } else {
-      if (!homeTeam) { toast.error("请选择主队"); return; }
-      if (!awayTeam) { toast.error("请选择客队"); return; }
-      if (homeTeam === awayTeam) { toast.error("主客队不能相同"); return; }
+      if (!homeTeam) { toast.error(t("matches.selectHomeTeam")); return; }
+      if (!awayTeam) { toast.error(t("matches.selectAwayTeam")); return; }
+      if (homeTeam === awayTeam) { toast.error(t("matches.sameTeamError")); return; }
       await addMatch({
         date: `${date}T${time}`,
         opponent: awayTeam,
@@ -148,8 +148,8 @@ export default function NewMatchPage() {
           >
             <Globe className="h-5 w-5" />
             <div>
-              <div className="font-medium text-sm">校外比赛</div>
-              <div className="text-xs text-muted-foreground">对手为外校队伍</div>
+              <div className="font-medium text-sm">{t("matches.scopeExternal")}</div>
+              <div className="text-xs text-muted-foreground">{t("matches.scopeExternalDesc")}</div>
             </div>
           </button>
           <button
@@ -162,46 +162,46 @@ export default function NewMatchPage() {
           >
             <Building2 className="h-5 w-5" />
             <div>
-              <div className="font-medium text-sm">校内比赛</div>
-              <div className="text-xs text-muted-foreground">院系/社团之间的比赛</div>
+              <div className="font-medium text-sm">{t("matches.scopeInternal")}</div>
+              <div className="text-xs text-muted-foreground">{t("matches.scopeInternalDesc")}</div>
             </div>
           </button>
         </div>
 
         {/* 基本信息 */}
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm">基本信息</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">{t("matches.basicInfo")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>日期</Label>
+                <Label>{t("matches.date")}</Label>
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
               <div className="space-y-2">
-                <Label>时间</Label>
+                <Label>{t("matches.time")}</Label>
                 <Input type="time" value={time} onChange={(e) => setTime(e.target.value)} />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>场地</Label>
-              <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="输入场地" />
+              <Label>{t("matches.venue")}</Label>
+              <Input value={venue} onChange={(e) => setVenue(e.target.value)} placeholder={t("matches.venue")} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>比赛类型</Label>
+                <Label>{t("matches.matchType")}</Label>
                 <Select value={matchType} onValueChange={(v) => v && setMatchType(v as MatchType)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectTrigger><SelectValue>{t(TYPE_OPTIONS.find(o => o.value === matchType)?.key ?? "matches.friendly")}</SelectValue></SelectTrigger>
                   <SelectContent>
-                    {TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>)}
+                    {TYPE_OPTIONS.map((o) => <SelectItem key={o.value} value={o.value}>{t(o.key)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>所属赛事（可选）</Label>
+                <Label>{t("matches.competition")}</Label>
                 <Select value={competitionId} onValueChange={handleCompetitionChange}>
-                  <SelectTrigger><SelectValue placeholder="无" /></SelectTrigger>
+                  <SelectTrigger><SelectValue>{competitionId ? competitions.find(c => c.id === competitionId)?.name ?? t("matches.none") : t("matches.none")}</SelectValue></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">无</SelectItem>
+                    <SelectItem value="">{t("matches.none")}</SelectItem>
                     {competitions.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -214,18 +214,18 @@ export default function NewMatchPage() {
         {scope === "external" && (
           <>
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm">对手</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-sm">{t("matches.opponent")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  <Label>对手队名 *</Label>
-                  <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder="输入对手名称" />
+                  <Label>{t("matches.opponentName")}</Label>
+                  <Input value={opponent} onChange={(e) => setOpponent(e.target.value)} placeholder={t("matches.enterOpponent")} />
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">本队出场阵容 ({selectedPlayers.length}/{players.length})</CardTitle>
+                <CardTitle className="text-sm">{t("matches.ourLineup")} ({selectedPlayers.length}/{players.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -245,7 +245,7 @@ export default function NewMatchPage() {
                     </label>
                   ))}
                 </div>
-                {players.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">请先添加球员</p>}
+                {players.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("matches.addPlayerFirst")}</p>}
               </CardContent>
             </Card>
           </>
@@ -255,33 +255,33 @@ export default function NewMatchPage() {
         {scope === "internal" && (
           <>
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm">对阵双方</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-sm">{t("matches.versus")}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>主队 *</Label>
+                    <Label>{t("matches.homeTeam")}</Label>
                     {compTeams.length > 0 ? (
                       <Select value={homeTeam} onValueChange={(v) => v && setHomeTeam(v)}>
-                        <SelectTrigger><SelectValue placeholder="选择主队" /></SelectTrigger>
+                        <SelectTrigger><SelectValue>{homeTeam || t("matches.selectHome")}</SelectValue></SelectTrigger>
                         <SelectContent>
                           {compTeams.filter((t) => t !== awayTeam).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Input value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)} placeholder="输入主队名" />
+                      <Input value={homeTeam} onChange={(e) => setHomeTeam(e.target.value)} placeholder={t("matches.inputHome")} />
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>客队 *</Label>
+                    <Label>{t("matches.awayTeam")}</Label>
                     {compTeams.length > 0 ? (
                       <Select value={awayTeam} onValueChange={(v) => v && setAwayTeam(v)}>
-                        <SelectTrigger><SelectValue placeholder="选择客队" /></SelectTrigger>
+                        <SelectTrigger><SelectValue>{awayTeam || t("matches.selectAway")}</SelectValue></SelectTrigger>
                         <SelectContent>
                           {compTeams.filter((t) => t !== homeTeam).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     ) : (
-                      <Input value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)} placeholder="输入客队名" />
+                      <Input value={awayTeam} onChange={(e) => setAwayTeam(e.target.value)} placeholder={t("matches.inputAway")} />
                     )}
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export default function NewMatchPage() {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm">主队出场阵容 ({homeSelectedPlayers.length}/{players.length})</CardTitle>
+                <CardTitle className="text-sm">{t("matches.homeLineup")} ({homeSelectedPlayers.length}/{players.length})</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -310,12 +310,12 @@ export default function NewMatchPage() {
                     </label>
                   ))}
                 </div>
-                {players.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">请先添加球员</p>}
+                {players.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">{t("matches.addPlayerFirst")}</p>}
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm">客队阵容（可选，每行: 姓名 位置）</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-sm">{t("matches.awayLineup")}</CardTitle></CardHeader>
               <CardContent>
                 <Textarea
                   value={awayLineupText}
@@ -324,7 +324,7 @@ export default function NewMatchPage() {
                   className="min-h-[100px] text-sm font-mono"
                 />
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  共 {parseAwayLineup().length} 人 · 格式: 姓名 + 空格 + 位置
+                  {t("matches.awayLineupHint")} · {parseAwayLineup().length} {t("stats.team")}
                 </p>
               </CardContent>
             </Card>
@@ -332,7 +332,7 @@ export default function NewMatchPage() {
         )}
 
         <Button onClick={handleSubmit} className="w-full" size="lg">
-          创建比赛
+          {t("matches.createMatch")}
         </Button>
       </div>
     </PageTransition>

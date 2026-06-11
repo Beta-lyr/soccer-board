@@ -15,6 +15,7 @@ import { useCompetitions, updateStanding, initStandings } from "@/hooks/use-comp
 import { useMatches } from "@/hooks/use-matches";
 import { useTeams } from "@/hooks/use-teams";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useI18n } from "@/lib/i18n";
 import { Bracket } from "@/components/competitions/bracket";
 import { ArrowLeft, Trash2, Trophy, Swords, ChevronRight } from "lucide-react";
 import Link from "next/link";
@@ -25,12 +26,12 @@ import type { Match } from "@/types";
 
 const matchesApi = createApiClient<Match>("matches");
 
-const STATUS_LABELS: Record<string, string> = { upcoming: "未开始", live: "进行中", finished: "已结束" };
+const STATUS_KEYS: Record<string, string> = { upcoming: "comp.notStarted", live: "comp.inProgress", finished: "comp.finished" };
 const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-500/15 text-blue-600", live: "bg-red-500/15 text-red-600", finished: "bg-gray-500/15 text-gray-600" };
 
 /** 格式化日期时间 */
-function formatDateTime(dateStr: string): string {
-  if (!dateStr) return "待定";
+function formatDateTime(dateStr: string, tbd: string): string {
+  if (!dateStr) return tbd;
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
   const month = (d.getMonth() + 1).toString().padStart(2, "0");
@@ -43,6 +44,7 @@ function formatDateTime(dateStr: string): string {
 function CompetitionDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { t } = useI18n();
   const id = searchParams.get("id");
   const { competitions, updateCompetition, deleteCompetition } = useCompetitions();
   const { confirm, ConfirmDialog } = useConfirm();
@@ -102,7 +104,7 @@ function CompetitionDetailContent() {
   };
   const handleSubmitScore = async () => {
     const h = parseInt(homeScore), a = parseInt(awayScore);
-    if (isNaN(h) || isNaN(a)) { toast.error("请输入有效比分"); return; }
+    if (isNaN(h) || isNaN(a)) { toast.error(t("comp.invalidScore")); return; }
     await updateMatch(scoreMatchId, { score: { home: h, away: a }, status: "finished" });
     setScoreDialogOpen(false);
     toast.success("比分已更新");
@@ -127,15 +129,15 @@ function CompetitionDetailContent() {
     const dateTime = matchDate ? `${matchDate}T${matchTime || "14:00"}` : "";
     await updateMatch(dateMatchId, { date: dateTime, venue: matchVenue });
     setDateDialogOpen(false);
-    toast.success("已更新");
+    toast.success(t("common.save"));
   };
 
   // 删除比赛
   const handleDeleteMatch = async (matchId: string) => {
-    if (!comp || !(await confirm({ description: "确认删除此比赛？", variant: "destructive" }))) return;
+    if (!comp || !(await confirm({ description: t("comp.confirmDelete"), variant: "destructive" }))) return;
     await deleteMatch(matchId);
     await updateCompetition(comp.id, { matchIds: comp.matchIds.filter((id) => id !== matchId) });
-    toast.success("比赛已删除");
+    toast.success(t("comp.deleted"));
   };
 
   // 杯赛晋级
@@ -164,11 +166,11 @@ function CompetitionDetailContent() {
   if (!comp) {
     return (
       <PageTransition>
-        <Header title="赛事详情" />
+        <Header title={t("comp.info")} />
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           <div className="text-center">
-            <p className="mb-3">赛事不存在或已删除</p>
-            <Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回列表</Button></Link>
+            <p className="mb-3">{t("common.noData")}</p>
+            <Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />{t("common.back")}</Button></Link>
           </div>
         </div>
       </PageTransition>
@@ -176,13 +178,13 @@ function CompetitionDetailContent() {
   }
 
   const handleDelete = async () => {
-    if (await confirm({ description: `确认删除赛事「${comp.name}」？关联的 ${compMatches.length} 场比赛将一并删除。`, variant: "destructive" })) {
+    if (await confirm({ description: t("comp.confirmDelete"), variant: "destructive" })) {
       // 级联删除关联比赛
       for (const m of compMatches) {
         await deleteMatch(m.id);
       }
       await deleteCompetition(comp.id);
-      toast.success("赛事已删除");
+      toast.success(t("comp.deleted"));
       router.push("/competitions/");
     }
   };
@@ -191,11 +193,11 @@ function CompetitionDetailContent() {
     <PageTransition>
       <Header
         title={comp.name}
-        description={`${comp.type === "league" ? "联赛" : "杯赛"} · ${comp.teams.length} 支队伍 · ${compMatches.length} 场比赛`}
+        description={`${comp.type === "league" ? t("comp.league") : t("comp.cup")} · ${comp.teams.length} ${t("comp.team")} · ${compMatches.length} ${t("comp.matchesCount")}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="destructive" size="sm" onClick={handleDelete}><Trash2 className="h-4 w-4 mr-1" />删除</Button>
-            <Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回</Button></Link>
+            <Button variant="destructive" size="sm" onClick={handleDelete}><Trash2 className="h-4 w-4 mr-1" />{t("common.delete")}</Button>
+            <Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />{t("common.back")}</Button></Link>
           </div>
         }
       />
@@ -204,22 +206,22 @@ function CompetitionDetailContent() {
         {comp.type === "league" && standings.length > 0 && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
             <Card>
-              <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Trophy className="h-4 w-4" />积分榜</CardTitle></CardHeader>
+              <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Trophy className="h-4 w-4" />{t("comp.standings")}</CardTitle></CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="text-xs text-muted-foreground border-b">
                         <th className="text-left py-2 pr-3">#</th>
-                        <th className="text-left py-2 pr-3">队伍</th>
-                        <th className="text-center py-2 px-2">场</th>
-                        <th className="text-center py-2 px-2">胜</th>
-                        <th className="text-center py-2 px-2">平</th>
-                        <th className="text-center py-2 px-2">负</th>
-                        <th className="text-center py-2 px-2">进</th>
-                        <th className="text-center py-2 px-2">失</th>
-                        <th className="text-center py-2 px-2">净</th>
-                        <th className="text-center py-2 pl-2 font-bold">分</th>
+                        <th className="text-left py-2 pr-3">{t("comp.team")}</th>
+                        <th className="text-center py-2 px-2">{t("stats.played")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.w")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.d")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.l")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.gf")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.ga")}</th>
+                        <th className="text-center py-2 px-2">{t("comp.gd")}</th>
+                        <th className="text-center py-2 pl-2 font-bold">{t("comp.pts")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -251,7 +253,7 @@ function CompetitionDetailContent() {
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Swords className="h-4 w-4" />对阵图
+                  <Swords className="h-4 w-4" />{t("comp.bracket")}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -267,7 +269,7 @@ function CompetitionDetailContent() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Swords className="h-4 w-4" />赛程
+                  <Swords className="h-4 w-4" />{t("comp.schedule")}
                   <span className="text-muted-foreground font-normal">({finishedMatches.length}/{compMatches.length})</span>
                 </CardTitle>
                 <div className="flex gap-2">
@@ -276,30 +278,30 @@ function CompetitionDetailContent() {
             </CardHeader>
             <CardContent className="space-y-1.5">
               {sortedMatches.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">暂无比赛，点击「添加比赛」开始</p>
+                <p className="text-sm text-muted-foreground text-center py-8">{t("common.noData")}</p>
               ) : (
                 sortedMatches.map((m) => {
                   const isFinished = m.status === "finished";
                   return (
                     <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/30 transition-colors group">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-sm font-medium truncate">{m.homeTeam || "我方"}</span>
+                        <span className="text-sm font-medium truncate">{m.homeTeam || t("matches.scopeExternal")}</span>
                         <span className="text-xs text-muted-foreground shrink-0">vs</span>
                         <span className="text-sm font-medium truncate">{m.awayTeam || m.opponent}</span>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs text-muted-foreground">{formatDateTime(m.date)}</span>
+                        <span className="text-xs text-muted-foreground">{formatDateTime(m.date, t("comp.tbd"))}</span>
                         {m.venue && <span className="text-xs text-muted-foreground">@{m.venue}</span>}
                         {isFinished && m.score ? (
                           <span className="text-sm font-bold tabular-nums">{m.score.home} - {m.score.away}</span>
                         ) : null}
-                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[m.status]}`}>{STATUS_LABELS[m.status]}</Badge>
+                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[m.status]}`}>{t(STATUS_KEYS[m.status])}</Badge>
                         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                           {!isFinished && (
-                            <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openScoreDialog(m.id)}>比分</Button>
+                            <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openScoreDialog(m.id)}>{t("matches.matchInfo")}</Button>
                           )}
-                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openDateDialog(m.id)}>编辑</Button>
-                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-destructive" onClick={() => handleDeleteMatch(m.id)}>删除</Button>
+                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openDateDialog(m.id)}>{t("common.edit")}</Button>
+                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-destructive" onClick={() => handleDeleteMatch(m.id)}>{t("common.delete")}</Button>
                         </div>
                         <Link href={`/matches/detail/?id=${m.id}`}><ChevronRight className="h-4 w-4 text-muted-foreground" /></Link>
                       </div>
@@ -328,28 +330,28 @@ function CompetitionDetailContent() {
       {/* 补录比分弹窗 */}
       <Dialog open={scoreDialogOpen} onOpenChange={setScoreDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>补录比分</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("matches.matchInfo")}</DialogTitle></DialogHeader>
           <div className="flex items-center justify-center gap-4 py-4">
-            <div className="text-center"><Label className="text-xs">主队</Label><Input type="number" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} className="w-20 text-center text-lg font-bold" min={0} /></div>
+            <div className="text-center"><Label className="text-xs">{t("matches.homeTeam")}</Label><Input type="number" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} className="w-20 text-center text-lg font-bold" min={0} /></div>
             <span className="text-2xl font-bold">-</span>
-            <div className="text-center"><Label className="text-xs">客队</Label><Input type="number" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} className="w-20 text-center text-lg font-bold" min={0} /></div>
+            <div className="text-center"><Label className="text-xs">{t("matches.awayTeam")}</Label><Input type="number" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} className="w-20 text-center text-lg font-bold" min={0} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setScoreDialogOpen(false)}>取消</Button><Button onClick={handleSubmitScore}>确认</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setScoreDialogOpen(false)}>{t("common.cancel")}</Button><Button onClick={handleSubmitScore}>{t("common.save")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* 设置日期弹窗 */}
       <Dialog open={dateDialogOpen} onOpenChange={setDateDialogOpen}>
         <DialogContent>
-          <DialogHeader><DialogTitle>编辑比赛</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{t("common.edit")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>日期</Label><Input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>时间</Label><Input type="time" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.date")}</Label><Input type="date" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.time")}</Label><Input type="time" value={matchTime} onChange={(e) => setMatchTime(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>场地</Label><Input value={matchVenue} onChange={(e) => setMatchVenue(e.target.value)} placeholder="输入场地" /></div>
+            <div className="space-y-2"><Label>{t("matches.venue")}</Label><Input value={matchVenue} onChange={(e) => setMatchVenue(e.target.value)} placeholder={t("matches.venue")} /></div>
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setDateDialogOpen(false)}>取消</Button><Button onClick={handleSubmitDate}>确认</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setDateDialogOpen(false)}>{t("common.cancel")}</Button><Button onClick={handleSubmitDate}>{t("common.save")}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 

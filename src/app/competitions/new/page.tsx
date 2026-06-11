@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useCompetitions, generateMultiRoundRobinSchedule, initStandings } from "@/hooks/use-competitions";
 import { useTeams } from "@/hooks/use-teams";
+import { useI18n } from "@/lib/i18n";
 import { ArrowLeft, Trophy, Swords, Users, Handshake, X } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -22,10 +23,10 @@ import type { Match, CompetitionGroup } from "@/types";
 const matchesApi = createApiClient<Match>("matches");
 const playersApi = createApiClient<import("@/types").Player>("players");
 
-const COMP_TYPES = [
-  { value: "league" as const, label: "联赛", desc: "积分制，支持单/双循环", icon: Trophy, color: "border-amber-500/50 bg-amber-500/5" },
-  { value: "cup" as const, label: "杯赛", desc: "淘汰赛或小组赛+淘汰赛", icon: Swords, color: "border-violet-500/50 bg-violet-500/5" },
-  { value: "friendly" as const, label: "友谊赛", desc: "两队一场比赛", icon: Handshake, color: "border-emerald-500/50 bg-emerald-500/5" },
+const COMP_TYPE_KEYS = [
+  { value: "league" as const, labelKey: "comp.league", descKey: "comp.leagueDesc", icon: Trophy, color: "border-amber-500/50 bg-amber-500/5" },
+  { value: "cup" as const, labelKey: "comp.cup", descKey: "comp.cupDesc", icon: Swords, color: "border-violet-500/50 bg-violet-500/5" },
+  { value: "friendly" as const, labelKey: "comp.friendly", descKey: "comp.friendlyDesc", icon: Handshake, color: "border-emerald-500/50 bg-emerald-500/5" },
 ];
 
 /** 创建比赛的通用函数 */
@@ -59,6 +60,7 @@ async function createMatch(opts: {
 
 export default function NewCompetitionPage() {
   const router = useRouter();
+  const { t } = useI18n();
   const { addCompetition } = useCompetitions();
   const { teams: allTeams } = useTeams();
 
@@ -108,15 +110,15 @@ export default function NewCompetitionPage() {
     if (type === "friendly") return { total: 1, desc: `${teamNames[0] ?? "A"} vs ${teamNames[1] ?? "B"}` };
     if (type === "league") {
       const single = selectedTeams.length * (selectedTeams.length - 1) / 2;
-      return { total: single * rounds, desc: `${rounds === 1 ? "单循环" : `${rounds}循环`}，${single * rounds} 场` };
+      return { total: single * rounds, desc: `${rounds === 1 ? t("comp.singleRound") : `${rounds}${t("comp.round")}`}，${single * rounds} ${t("comp.matchesCount")}` };
     }
     if (format === "knockout") {
-      return { total: selectedTeams.length - 1, desc: `淘汰赛，${selectedTeams.length - 1} 场` };
+      return { total: selectedTeams.length - 1, desc: `${t("comp.knockout")}，${selectedTeams.length - 1} ${t("comp.matchesCount")}` };
     }
     const perGroup = Math.ceil(selectedTeams.length / groupCount);
     const groupMatches = groupCount * perGroup * (perGroup - 1) / 2;
-    return { total: groupMatches + groupCount - 1, desc: `${groupCount} 组小组赛 + 淘汰赛` };
-  }, [type, format, rounds, groupCount, selectedTeams.length, teamNames]);
+    return { total: groupMatches + groupCount - 1, desc: `${groupCount} ${t("comp.group")}${t("comp.groupStage")} + ${t("comp.knockout")}` };
+  }, [type, format, rounds, groupCount, selectedTeams.length, teamNames, t]);
 
   const handleSubmit = async () => {
     if (!canSubmit) return;
@@ -184,10 +186,10 @@ export default function NewCompetitionPage() {
 
       // 回填 competitionId
       const compId = matchIds.length > 0 ? (await matchesApi.get(matchIds[0]))?.competitionId : undefined;
-      toast.success(`赛事已创建，共 ${matchIds.length} 场比赛`);
+      toast.success(t("comp.compCreated", { count: matchIds.length }));
       router.push("/competitions/");
     } catch {
-      toast.error("创建失败");
+      toast.error(t("comp.createFailed"));
     } finally {
       setLoading(false);
     }
@@ -196,21 +198,21 @@ export default function NewCompetitionPage() {
   return (
     <PageTransition>
       <Header
-        title="新建赛事"
-        actions={<Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />返回</Button></Link>}
+        title={t("comp.newComp")}
+        actions={<Link href="/competitions/"><Button variant="outline" size="sm"><ArrowLeft className="h-4 w-4 mr-1" />{t("common.back")}</Button></Link>}
       />
       <div className="flex-1 p-4 md:p-6 max-w-2xl mx-auto space-y-6">
         {/* 赛事名称 */}
         <div className="space-y-2">
-          <Label>赛事名称</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="例如：校内联赛 2026" />
+          <Label>{t("comp.compName")}</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("comp.compNamePlaceholder")} />
         </div>
 
         {/* 赛事类型 */}
         <div className="space-y-2">
-          <Label>赛事类型</Label>
+          <Label>{t("comp.compType")}</Label>
           <div className="grid grid-cols-3 gap-3">
-            {COMP_TYPES.map((opt) => (
+            {COMP_TYPE_KEYS.map((opt) => (
               <button
                 key={opt.value}
                 type="button"
@@ -218,8 +220,8 @@ export default function NewCompetitionPage() {
                 className={cn("p-4 rounded-lg border-2 text-left transition-all", type === opt.value ? opt.color : "border-muted hover:border-muted-foreground/20")}
               >
                 <opt.icon className="h-5 w-5 mb-2" />
-                <div className="font-medium text-sm">{opt.label}</div>
-                <div className="text-xs text-muted-foreground mt-0.5">{opt.desc}</div>
+                <div className="font-medium text-sm">{t(opt.labelKey)}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{t(opt.descKey)}</div>
               </button>
             ))}
           </div>
@@ -228,13 +230,13 @@ export default function NewCompetitionPage() {
         {/* 赛制选项 */}
         {type === "league" && (
           <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm">赛制</CardTitle></CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-sm">{t("comp.format")}</CardTitle></CardHeader>
             <CardContent>
               <div className="flex gap-2">
                 {[1, 2].map((r) => (
                   <button key={r} type="button" onClick={() => setRounds(r)}
                     className={cn("px-4 py-2 rounded-md border text-sm transition-colors", rounds === r ? "bg-primary text-primary-foreground border-primary" : "border-muted hover:bg-accent")}>
-                    {r === 1 ? "单循环" : "双循环"}
+                    {r === 1 ? t("comp.singleRound") : t("comp.doubleRound")}
                   </button>
                 ))}
               </div>
@@ -244,27 +246,27 @@ export default function NewCompetitionPage() {
 
         {type === "cup" && (
           <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm">赛制</CardTitle></CardHeader>
+            <CardHeader className="pb-3"><CardTitle className="text-sm">{t("comp.format")}</CardTitle></CardHeader>
             <CardContent className="space-y-3">
               <div className="flex gap-2">
                 {[
-                  { value: "knockout" as const, label: "淘汰赛" },
-                  { value: "group_knockout" as const, label: "小组赛+淘汰赛" },
+                  { value: "knockout" as const, labelKey: "comp.knockout" },
+                  { value: "group_knockout" as const, labelKey: "comp.groupKnockout" },
                 ].map((opt) => (
                   <button key={opt.value} type="button" onClick={() => setFormat(opt.value)}
                     className={cn("px-4 py-2 rounded-md border text-sm transition-colors", format === opt.value ? "bg-primary text-primary-foreground border-primary" : "border-muted hover:bg-accent")}>
-                    {opt.label}
+                    {t(opt.labelKey)}
                   </button>
                 ))}
               </div>
               {format === "group_knockout" && (
                 <div className="space-y-2">
-                  <Label>小组数</Label>
+                  <Label>{t("comp.groupCount")}</Label>
                   <Select value={String(groupCount)} onValueChange={(v) => v && setGroupCount(Number(v))}>
-                    <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-32"><SelectValue>{groupCount} {t("comp.groups")}</SelectValue></SelectTrigger>
                     <SelectContent>
                       {[2, 3, 4].filter((n) => n <= selectedTeams.length).map((n) => (
-                        <SelectItem key={n} value={String(n)}>{n} 组</SelectItem>
+                        <SelectItem key={n} value={String(n)}>{n} {t("comp.groups")}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -278,15 +280,15 @@ export default function NewCompetitionPage() {
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm flex items-center gap-2">
-              <Users className="h-4 w-4" />参赛队伍 ({selectedTeams.length})
-              {type === "friendly" && <span className="text-muted-foreground font-normal">（选择 2 支）</span>}
+              <Users className="h-4 w-4" />{t("comp.teams")} ({selectedTeams.length})
+              {type === "friendly" && <span className="text-muted-foreground font-normal">（{t("comp.select2")}）</span>}
             </CardTitle>
           </CardHeader>
           <CardContent>
             {allTeams.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">
-                <p className="text-sm mb-2">暂无队伍</p>
-                <Link href="/teams/new/"><Button variant="outline" size="sm">先去创建队伍</Button></Link>
+                <p className="text-sm mb-2">{t("comp.noTeams")}</p>
+                <Link href="/teams/new/"><Button variant="outline" size="sm">{t("comp.createTeamFirst")}</Button></Link>
               </div>
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -313,24 +315,24 @@ export default function NewCompetitionPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">对阵配置（首轮）</CardTitle>
-                <Button variant="outline" size="sm" onClick={initBracket}>自动生成</Button>
+                <CardTitle className="text-sm">{t("comp.bracketConfig")}</CardTitle>
+                <Button variant="outline" size="sm" onClick={initBracket}>{t("comp.autoGenerate")}</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
               {bracket.length === 0 ? (
-                <p className="text-xs text-muted-foreground">点击「自动生成」配置对阵</p>
+                <p className="text-xs text-muted-foreground">{t("comp.clickAutoGenerate")}</p>
               ) : (
                 bracket.map(([homeIdx, awayIdx], i) => (
                   <div key={i} className="flex items-center gap-2 p-2 rounded border text-sm">
                     <span className="text-xs text-muted-foreground w-6">{i + 1}</span>
                     <Select value={String(homeIdx)} onValueChange={(v) => { const next = [...bracket]; next[i] = [Number(v), next[i][1]]; setBracket(next); }}>
-                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="flex-1"><SelectValue>{selectedTeams[homeIdx]?.shortName ?? selectedTeams[homeIdx]?.name ?? ""}</SelectValue></SelectTrigger>
                       <SelectContent>{selectedTeams.map((t, idx) => <SelectItem key={t.id} value={String(idx)}>{t.shortName ?? t.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <span className="text-xs text-muted-foreground">vs</span>
                     <Select value={String(awayIdx)} onValueChange={(v) => { const next = [...bracket]; next[i] = [next[i][0], Number(v)]; setBracket(next); }}>
-                      <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
+                      <SelectTrigger className="flex-1"><SelectValue>{selectedTeams[awayIdx]?.shortName ?? selectedTeams[awayIdx]?.name ?? ""}</SelectValue></SelectTrigger>
                       <SelectContent>{selectedTeams.map((t, idx) => <SelectItem key={t.id} value={String(idx)}>{t.shortName ?? t.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <Button variant="ghost" size="sm" className="px-1" onClick={() => setBracket(bracket.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
@@ -342,7 +344,7 @@ export default function NewCompetitionPage() {
                   const used = new Set(bracket.flat());
                   const avail = selectedTeams.map((_, i) => i).filter((i) => !used.has(i));
                   if (avail.length >= 2) setBracket([...bracket, [avail[0], avail[1]]]);
-                }}><Swords className="h-3 w-3 mr-1" />添加对阵</Button>
+                }}><Swords className="h-3 w-3 mr-1" />{t("comp.addBracket")}</Button>
               )}
             </CardContent>
           </Card>
@@ -353,8 +355,8 @@ export default function NewCompetitionPage() {
           <Card>
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-sm">分组配置</CardTitle>
-                <Button variant="outline" size="sm" onClick={initGroupAssignments}>自动分组</Button>
+                <CardTitle className="text-sm">{t("comp.groupConfig")}</CardTitle>
+                <Button variant="outline" size="sm" onClick={initGroupAssignments}>{t("comp.autoGroup")}</Button>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -362,10 +364,10 @@ export default function NewCompetitionPage() {
                 <div key={team.id} className="flex items-center gap-2 text-sm">
                   <span className="flex-1 truncate">{team.shortName ?? team.name}</span>
                   <Select value={String.fromCharCode(65 + (groupAssignments[i] ?? 0))} onValueChange={(v) => { if (!v) return; const next = [...groupAssignments]; next[i] = v.charCodeAt(0) - 65; setGroupAssignments(next); }}>
-                    <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+                    <SelectTrigger className="w-20"><SelectValue>{String.fromCharCode(65 + (groupAssignments[i] ?? 0))}{t("comp.groups")}</SelectValue></SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: groupCount }, (_, g) => (
-                        <SelectItem key={g} value={String.fromCharCode(65 + g)}>{String.fromCharCode(65 + g)}组</SelectItem>
+                        <SelectItem key={g} value={String.fromCharCode(65 + g)}>{String.fromCharCode(65 + g)}{t("comp.groups")}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -377,14 +379,14 @@ export default function NewCompetitionPage() {
 
         {/* 默认日期/场地 */}
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm">默认比赛信息（可选）</CardTitle></CardHeader>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">{t("comp.defaultMatchInfo")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2"><Label>日期</Label><Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>时间</Label><Input type="time" value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} /></div>
-              <div className="space-y-2"><Label>场地</Label><Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder="例如：西操场" /></div>
+              <div className="space-y-2"><Label>{t("matches.date")}</Label><Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.time")}</Label><Input type="time" value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.venue")}</Label><Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder={t("matches.venue")} /></div>
             </div>
-            <p className="text-xs text-muted-foreground">可在赛事详情页逐场修改</p>
+            <p className="text-xs text-muted-foreground">{t("comp.canEditLater")}</p>
           </CardContent>
         </Card>
 
@@ -401,7 +403,7 @@ export default function NewCompetitionPage() {
         )}
 
         <Button onClick={handleSubmit} disabled={!canSubmit || loading} className="w-full" size="lg">
-          {loading ? "创建中..." : `创建赛事${canSubmit ? ` (${schedulePreview.total} 场)` : ""}`}
+          {loading ? t("comp.creating") : `${t("comp.createComp")}${canSubmit ? ` (${schedulePreview.total} ${t("comp.matchesCount")})` : ""}`}
         </Button>
       </div>
     </PageTransition>

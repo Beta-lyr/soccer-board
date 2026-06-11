@@ -21,11 +21,11 @@ import { Plus, Trash2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
-const THEME_MAP: Record<TrainingTheme, { label: string; color: string }> = {
-  fitness: { label: "体能", color: "bg-red-500/15 text-red-600" },
-  technical: { label: "技术", color: "bg-blue-500/15 text-blue-600" },
-  tactical: { label: "战术", color: "bg-green-500/15 text-green-600" },
-  set_piece: { label: "定位球", color: "bg-amber-500/15 text-amber-600" },
+const THEME_KEYS: Record<TrainingTheme, { key: string; color: string }> = {
+  fitness: { key: "training.fitness", color: "bg-red-500/15 text-red-600" },
+  technical: { key: "training.technical", color: "bg-blue-500/15 text-blue-600" },
+  tactical: { key: "training.tactical", color: "bg-green-500/15 text-green-600" },
+  set_piece: { key: "training.setPiece", color: "bg-amber-500/15 text-amber-600" },
 };
 
 export default function TrainingPage() {
@@ -44,12 +44,12 @@ export default function TrainingPage() {
   const [description, setDescription] = useState("");
 
   const handleCreate = async () => {
-    if (!location) { toast.error("请输入训练地点"); return; }
+    if (!location) { toast.error(t("training.enterLocation")); return; }
     await addTraining({
       date, time, location, theme, description: description || undefined,
       attendance: players.map((p) => ({ playerId: p.id, present: true })),
     });
-    toast.success("训练已创建");
+    toast.success(t("training.created"));
     setShowForm(false);
     setDate(new Date().toISOString().slice(0, 10));
     setTime("18:00");
@@ -59,7 +59,7 @@ export default function TrainingPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (await confirm({ description: "确认删除此训练？", variant: "destructive" })) {
+    if (await confirm({ description: t("training.confirmDelete"), variant: "destructive" })) {
       await deleteTraining(id);
     }
   };
@@ -94,7 +94,7 @@ export default function TrainingPage() {
         ) : (
           <div className="space-y-3">
             {trainings.map((tr) => {
-              const themeInfo = THEME_MAP[tr.theme];
+              const themeInfo = THEME_KEYS[tr.theme];
               const presentCount = tr.attendance.filter((a) => a.present).length;
               return (
                 <motion.div key={tr.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
@@ -105,7 +105,7 @@ export default function TrainingPage() {
                           <div className="flex items-center gap-3 mb-1">
                             <span className="font-semibold">{tr.date}</span>
                             <span className="text-sm text-muted-foreground">{tr.time}</span>
-                            <Badge variant="outline" className={themeInfo.color}>{themeInfo.label}</Badge>
+                            <Badge variant="outline" className={themeInfo.color}>{t(themeInfo.key)}</Badge>
                           </div>
                           <div className="text-sm text-muted-foreground">
                             📍 {tr.location}
@@ -114,7 +114,7 @@ export default function TrainingPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm" onClick={() => setShowAttendance(showAttendance === tr.id ? null : tr.id)}>
-                            <Users className="h-4 w-4 mr-1" />出勤 {presentCount}/{tr.attendance.length}
+                            <Users className="h-4 w-4 mr-1" />{t("training.attendance")} {presentCount}/{tr.attendance.length}
                           </Button>
                           <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100" onClick={() => handleDelete(tr.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
@@ -159,26 +159,26 @@ export default function TrainingPage() {
           <DialogHeader><DialogTitle>{t("training.newTraining")}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>日期</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>时间</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.date")}</Label><Input type="date" value={date} onChange={(e) => setDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>{t("matches.time")}</Label><Input type="time" value={time} onChange={(e) => setTime(e.target.value)} /></div>
             </div>
-            <div className="space-y-2"><Label>地点 *</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="训练场地" /></div>
+            <div className="space-y-2"><Label>{t("training.location")} *</Label><Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder={t("training.location")} /></div>
             <div className="space-y-2">
-              <Label>主题</Label>
+              <Label>{t("training.theme")}</Label>
               <Select value={theme} onValueChange={(v) => v && setTheme(v as TrainingTheme)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger><SelectValue>{t(THEME_KEYS[theme].key)}</SelectValue></SelectTrigger>
                 <SelectContent>
-                  {Object.entries(THEME_MAP).map(([key, val]) => (
-                    <SelectItem key={key} value={key}>{val.label}</SelectItem>
+                  {Object.entries(THEME_KEYS).map(([key, val]) => (
+                    <SelectItem key={key} value={key}>{t(val.key)}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2"><Label>描述</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="训练内容描述（可选）" rows={3} /></div>
+            <div className="space-y-2"><Label>{t("training.description")}</Label><Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder={t("training.description")} rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>取消</Button>
-            <Button onClick={handleCreate}>创建训练</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>{t("common.cancel")}</Button>
+            <Button onClick={handleCreate}>{t("training.create")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

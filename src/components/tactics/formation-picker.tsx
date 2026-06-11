@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { FORMATION_LIST, FORMATIONS, getFormationsForPlayerCount, PLAYER_COUNTS, type FormationPosition } from "@/types";
 import { Plus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n";
 
 interface FormationPickerProps {
   value: string;
@@ -25,6 +26,7 @@ interface FormationPickerProps {
 }
 
 export function FormationPicker({ value, onChange, playerCount, onPlayerCountChange, onCustomFormation }: FormationPickerProps) {
+  const { t } = useI18n();
   const [showCustom, setShowCustom] = useState(false);
   const [customName, setCustomName] = useState("");
   const [customCount, setCustomCount] = useState(playerCount ?? 11);
@@ -75,7 +77,7 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
       onChange(name);
       setShowCustom(false);
     } catch (e) {
-      alert(`格式错误: ${e instanceof Error ? e.message : "未知错误"}\n\n每行格式: 位置 X Y\n例如: GK 50 92`);
+      alert(`${t("tactics.formatError")}: ${e instanceof Error ? e.message : ""}\n\n每行格式: 位置 X Y\n例如: GK 50 92`);
     }
   };
 
@@ -107,7 +109,7 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
         <div className="flex gap-1.5">
           <Select value={hasCurrentFormation ? value : (formationOptions[0] ?? "")} onValueChange={(v) => v && onChange(v)}>
             <SelectTrigger className="flex-1">
-              <SelectValue placeholder="选择阵型" />
+              <SelectValue>{hasCurrentFormation ? value : (formationOptions[0] ?? "")}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               {formationOptions.map((f) => (
@@ -120,7 +122,7 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={() => { setCustomCount(currentCount); setShowCustom(true); }} title="自定义阵型">
+          <Button variant="outline" size="sm" onClick={() => { setCustomCount(currentCount); setShowCustom(true); }} title={t("tactics.customFormation")}>
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -129,15 +131,15 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
       <Dialog open={showCustom} onOpenChange={setShowCustom}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>自定义阵型</DialogTitle>
+            <DialogTitle>{t("tactics.customFormation")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>阵型名称</Label>
-              <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="例如: 4-3-3-攻击" />
+              <Label>{t("tactics.formationName")}</Label>
+              <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder={t("tactics.formationNamePlaceholder")} />
             </div>
             <div className="space-y-2">
-              <Label>人数</Label>
+              <Label>{t("tactics.playerCount")}</Label>
               <div className="flex gap-1">
                 {[5, 7, 8, 9, 11].map((n) => (
                   <Button
@@ -147,13 +149,13 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
                     onClick={() => setCustomCount(n)}
                     className="text-xs h-7"
                   >
-                    {n}人
+                    {n}
                   </Button>
                 ))}
               </div>
             </div>
             <div className="space-y-2">
-              <Label>球员位置（每行: 位置 X Y，X/Y 为百分比 0-100）</Label>
+              <Label>{t("tactics.playerPositions")}</Label>
               <textarea
                 value={customPositions}
                 onChange={(e) => setCustomPositions(e.target.value)}
@@ -161,14 +163,13 @@ export function FormationPicker({ value, onChange, playerCount, onPlayerCountCha
                 placeholder="GK 50 92&#10;LB 15 72&#10;CB 35 75"
               />
               <p className="text-xs text-muted-foreground">
-                共 {customPositions.trim().split("\n").filter((l) => l.trim()).length} 个位置 ·
-                X: 0(左)~100(右) · Y: 0(上/对方)~100(下/己方)
+                {t("tactics.positionsHint", { count: customPositions.trim().split("\n").filter((l) => l.trim()).length })}
               </p>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCustom(false)}>取消</Button>
-            <Button onClick={handleSaveCustom}>保存阵型</Button>
+            <Button variant="outline" onClick={() => setShowCustom(false)}>{t("common.cancel")}</Button>
+            <Button onClick={handleSaveCustom}>{t("tactics.saveFormation")}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
