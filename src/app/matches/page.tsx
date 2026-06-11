@@ -23,7 +23,6 @@ const TABS: { value: FilterTab; label: string }[] = [
   { value: "league", label: "联赛" },
   { value: "cup", label: "杯赛" },
   { value: "friendly", label: "友谊赛" },
-  { value: "training", label: "训练赛" },
 ];
 
 /** 格式化日期时间 */

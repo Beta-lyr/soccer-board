@@ -16,7 +16,7 @@ import { useMatches } from "@/hooks/use-matches";
 import { useTeams } from "@/hooks/use-teams";
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Bracket } from "@/components/competitions/bracket";
-import { ArrowLeft, Trash2, Trophy, Swords, Plus, ChevronRight } from "lucide-react";
+import { ArrowLeft, Trash2, Trophy, Swords, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
@@ -64,13 +64,6 @@ function CompetitionDetailContent() {
   const [matchTime, setMatchTime] = useState("");
   const [matchVenue, setMatchVenue] = useState("");
 
-  // 添加比赛弹窗
-  const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [addHome, setAddHome] = useState("");
-  const [addAway, setAddAway] = useState("");
-  const [addDate, setAddDate] = useState("");
-  const [addTime, setAddTime] = useState("");
-  const [addVenue, setAddVenue] = useState("");
 
   const compMatches = useMemo(() => matches.filter((m) => comp?.matchIds.includes(m.id)), [matches, comp]);
   const finishedMatches = useMemo(() => compMatches.filter((m) => m.status === "finished"), [compMatches]);
@@ -145,26 +138,6 @@ function CompetitionDetailContent() {
     toast.success("比赛已删除");
   };
 
-  // 添加比赛
-  const handleAddMatch = async () => {
-    if (!comp) return;
-    if (!addHome || !addAway) { toast.error("请选择主客队"); return; }
-    if (addHome === addAway) { toast.error("主客队不能相同"); return; }
-    const dateTime = addDate ? `${addDate}T${addTime || "14:00"}` : "";
-    const matchId = crypto.randomUUID();
-    const now = new Date().toISOString();
-    await matchesApi.add({
-      date: dateTime, venue: addVenue, type: comp.type, scope: "internal",
-      homeTeam: addHome, awayTeam: addAway, opponent: addAway,
-      homeLineup: [], awayLineup: [], lineup: [], status: "upcoming",
-      events: [], ratings: [], competitionId: comp.id,
-    });
-    await updateCompetition(comp.id, { matchIds: [...comp.matchIds, matchId] });
-    setAddDialogOpen(false);
-    setAddHome(""); setAddAway(""); setAddDate(""); setAddTime(""); setAddVenue("");
-    toast.success("比赛已添加");
-  };
-
   // 杯赛晋级
   const handleGenerateNextRound = async () => {
     if (!comp) return;
@@ -203,7 +176,11 @@ function CompetitionDetailContent() {
   }
 
   const handleDelete = async () => {
-    if (await confirm({ description: `确认删除赛事「${comp.name}」？关联的比赛不会被删除。`, variant: "destructive" })) {
+    if (await confirm({ description: `确认删除赛事「${comp.name}」？关联的 ${compMatches.length} 场比赛将一并删除。`, variant: "destructive" })) {
+      // 级联删除关联比赛
+      for (const m of compMatches) {
+        await deleteMatch(m.id);
+      }
       await deleteCompetition(comp.id);
       toast.success("赛事已删除");
       router.push("/competitions/");
@@ -294,9 +271,6 @@ function CompetitionDetailContent() {
                   <span className="text-muted-foreground font-normal">({finishedMatches.length}/{compMatches.length})</span>
                 </CardTitle>
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setAddDialogOpen(true)}>
-                    <Plus className="h-3.5 w-3.5 mr-1" />添加比赛
-                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -379,40 +353,6 @@ function CompetitionDetailContent() {
         </DialogContent>
       </Dialog>
 
-      {/* 添加比赛弹窗 */}
-      <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>添加比赛</DialogTitle></DialogHeader>
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>主队</Label>
-                <Select value={addHome} onValueChange={(v) => v && setAddHome(v)}>
-                  <SelectTrigger><SelectValue placeholder="选择主队" /></SelectTrigger>
-                  <SelectContent>
-                    {comp.teams.filter((t) => t !== addAway).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>客队</Label>
-                <Select value={addAway} onValueChange={(v) => v && setAddAway(v)}>
-                  <SelectTrigger><SelectValue placeholder="选择客队" /></SelectTrigger>
-                  <SelectContent>
-                    {comp.teams.filter((t) => t !== addHome).map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2"><Label>日期</Label><Input type="date" value={addDate} onChange={(e) => setAddDate(e.target.value)} /></div>
-              <div className="space-y-2"><Label>时间</Label><Input type="time" value={addTime} onChange={(e) => setAddTime(e.target.value)} /></div>
-            </div>
-            <div className="space-y-2"><Label>场地</Label><Input value={addVenue} onChange={(e) => setAddVenue(e.target.value)} placeholder="输入场地" /></div>
-          </div>
-          <DialogFooter><Button variant="outline" onClick={() => setAddDialogOpen(false)}>取消</Button><Button onClick={handleAddMatch}>添加</Button></DialogFooter>
-        </DialogContent>
-      </Dialog>
     </PageTransition>
   );
 }
