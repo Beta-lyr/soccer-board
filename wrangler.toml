@@ -4,3 +4,8 @@ pages_build_output_dir = "out"
 [[r2_buckets]]
 binding = "AVATAR_BUCKET"
 bucket_name = "betalyr-r2-bucket"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "betalyr-db"
+database_id = "29491516-431b-4d29-abe6-6012cc4eb52f"

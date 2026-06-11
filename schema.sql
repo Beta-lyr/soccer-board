@@ -1,4 +1,4 @@
--- Soccer Board D1 Schema
+-- betalyr-db D1 Schema
 
 CREATE TABLE IF NOT EXISTS players (
   id TEXT PRIMARY KEY,
