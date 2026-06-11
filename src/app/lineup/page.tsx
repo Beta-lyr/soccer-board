@@ -81,7 +81,7 @@ export default function LineupListPage() {
                               )}
                             </div>
                           </div>
-                          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(tmpl.id, tmpl.name); }}
                               className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"

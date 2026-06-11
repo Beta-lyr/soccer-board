@@ -283,27 +283,34 @@ function CompetitionDetailContent() {
                 sortedMatches.map((m) => {
                   const isFinished = m.status === "finished";
                   return (
-                    <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/30 transition-colors group">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <span className="text-sm font-medium truncate">{m.homeTeam || t("matches.scopeExternal")}</span>
-                        <span className="text-xs text-muted-foreground shrink-0">vs</span>
-                        <span className="text-sm font-medium truncate">{m.awayTeam || m.opponent}</span>
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs text-muted-foreground">{formatDateTime(m.date, t("comp.tbd"))}</span>
-                        {m.venue && <span className="text-xs text-muted-foreground">@{m.venue}</span>}
-                        {isFinished && m.score ? (
-                          <span className="text-sm font-bold tabular-nums">{m.score.home} - {m.score.away}</span>
-                        ) : null}
-                        <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[m.status]}`}>{t(STATUS_KEYS[m.status])}</Badge>
-                        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!isFinished && (
-                            <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openScoreDialog(m.id)}>{t("matches.matchInfo")}</Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => openDateDialog(m.id)}>{t("common.edit")}</Button>
-                          <Button variant="ghost" size="sm" className="h-6 text-xs px-2 text-destructive" onClick={() => handleDeleteMatch(m.id)}>{t("common.delete")}</Button>
+                    <div key={m.id} className="p-3 rounded-lg border hover:bg-accent/30 transition-colors group">
+                      {/* 第一行：球队名 + 比分 */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-sm font-medium truncate">{m.homeTeam || t("matches.scopeExternal")}</span>
+                          <span className="text-xs text-muted-foreground shrink-0">vs</span>
+                          <span className="text-sm font-medium truncate">{m.awayTeam || m.opponent}</span>
                         </div>
-                        <Link href={`/matches/detail/?id=${m.id}`}><ChevronRight className="h-4 w-4 text-muted-foreground" /></Link>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {isFinished && m.score ? (
+                            <span className="text-sm font-bold tabular-nums">{m.score.home} - {m.score.away}</span>
+                          ) : null}
+                          <Badge variant="outline" className={`text-[10px] ${STATUS_COLORS[m.status]}`}>{t(STATUS_KEYS[m.status])}</Badge>
+                        </div>
+                      </div>
+                      {/* 第二行：日期/场地 + 操作按钮 */}
+                      <div className="flex items-center justify-between mt-1.5">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>{formatDateTime(m.date, t("comp.tbd"))}</span>
+                          {m.venue && <span>@{m.venue}</span>}
+                        </div>
+                        <div className="flex gap-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                          {!isFinished && (
+                            <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => openScoreDialog(m.id)}>{t("matches.matchInfo")}</Button>
+                          )}
+                          <Button variant="ghost" size="sm" className="h-7 text-xs px-2" onClick={() => openDateDialog(m.id)}>{t("common.edit")}</Button>
+                          <Button variant="ghost" size="sm" className="h-7 text-xs px-2 text-destructive" onClick={() => handleDeleteMatch(m.id)}>{t("common.delete")}</Button>
+                        </div>
                       </div>
                     </div>
                   );

@@ -116,7 +116,7 @@ export default function TrainingPage() {
                           <Button variant="outline" size="sm" onClick={() => setShowAttendance(showAttendance === tr.id ? null : tr.id)}>
                             <Users className="h-4 w-4 mr-1" />{t("training.attendance")} {presentCount}/{tr.attendance.length}
                           </Button>
-                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100" onClick={() => handleDelete(tr.id)}>
+                          <Button variant="ghost" size="sm" className="md:opacity-0 md:group-hover:opacity-100" onClick={() => handleDelete(tr.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>

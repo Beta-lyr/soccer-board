@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { PitchSvg } from "@/components/tactics/pitch-svg";
+import { ResponsiveCanvas } from "@/components/ui/responsive-canvas";
 import { usePlayers } from "@/hooks/use-players";
 import { useLineupTemplates } from "@/hooks/use-lineup";
 import { FORMATIONS, type LineupStarter } from "@/types";
@@ -191,6 +192,7 @@ export default function NewLineupPage() {
 
           {/* 右侧球场 */}
           <div className="flex-1 flex justify-center">
+            <ResponsiveCanvas width={PITCH_W} height={PITCH_H}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative" style={{ width: PITCH_W, height: PITCH_H }}>
               <PitchSvg width={PITCH_W} height={PITCH_H} />
               {formationPositions.map((fp, idx) => {
@@ -214,6 +216,7 @@ export default function NewLineupPage() {
                 );
               })}
             </motion.div>
+            </ResponsiveCanvas>
           </div>
         </div>
       </div>

@@ -81,7 +81,7 @@ export default function TeamsPage() {
                               <h3 className="font-semibold text-sm truncate">{team.name}</h3>
                               <button
                                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(team.id, team.name); }}
-                                className="p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
+                                className="p-1 rounded md:opacity-0 md:group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-all"
                               >
                                 <Trash2 className="h-3.5 w-3.5" />
                               </button>

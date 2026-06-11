@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PitchSvg } from "@/components/tactics/pitch-svg";
+import { ResponsiveCanvas } from "@/components/ui/responsive-canvas";
 import { useLineupTemplates } from "@/hooks/use-lineup";
 import { usePlayers } from "@/hooks/use-players";
 import { FORMATION_GROUPS } from "@/types";
@@ -128,6 +129,7 @@ function LineupDetailContent() {
 
           {/* 右侧球场 */}
           <div className="flex-1 flex justify-center">
+            <ResponsiveCanvas width={PITCH_W} height={PITCH_H}>
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative" style={{ width: PITCH_W, height: PITCH_H }}>
               <PitchSvg width={PITCH_W} height={PITCH_H} />
               {template.starters.map((s, idx) => {
@@ -144,6 +146,7 @@ function LineupDetailContent() {
                 );
               })}
             </motion.div>
+            </ResponsiveCanvas>
           </div>
         </div>
       </div>

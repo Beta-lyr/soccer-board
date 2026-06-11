@@ -211,7 +211,7 @@ export default function NewCompetitionPage() {
         {/* 赛事类型 */}
         <div className="space-y-2">
           <Label>{t("comp.compType")}</Label>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {COMP_TYPE_KEYS.map((opt) => (
               <button
                 key={opt.value}
@@ -381,7 +381,7 @@ export default function NewCompetitionPage() {
         <Card>
           <CardHeader className="pb-3"><CardTitle className="text-sm">{t("comp.defaultMatchInfo")}</CardTitle></CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2"><Label>{t("matches.date")}</Label><Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} /></div>
               <div className="space-y-2"><Label>{t("matches.time")}</Label><Input type="time" value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} /></div>
               <div className="space-y-2"><Label>{t("matches.venue")}</Label><Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder={t("matches.venue")} /></div>

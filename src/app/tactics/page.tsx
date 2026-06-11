@@ -67,7 +67,7 @@ export default function TacticsPage() {
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          className="md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setDeleteId(tactic.id); }}
                         >
                           <Trash2 className="h-4 w-4 text-destructive" />

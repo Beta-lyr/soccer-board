@@ -115,7 +115,7 @@ export default function StatsPage() {
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">{t("stats.filter")}:</span>
           <Select value={filterId} onValueChange={(v) => v && setFilterId(v)}>
-            <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
+            <SelectTrigger className="w-full sm:w-48"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{t("stats.allMatches")}</SelectItem>
               <SelectItem value="no-comp">{t("stats.noCompMatches")}</SelectItem>

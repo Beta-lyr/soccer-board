@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Pitch } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools } from "@/components/tactics/drawing-tools";
+import { ResponsiveCanvas } from "@/components/ui/responsive-canvas";
 import { FORMATIONS, FORMATION_LIST, FORMATION_GROUPS, type TacticType, type Tactic } from "@/types";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -187,14 +188,16 @@ function EditTacticContent() {
               onDeleteSelected={handleDeleteSelected}
             />
             <div className="flex justify-center" ref={svgContainerRef}>
-              <Pitch
-                formation={FORMATIONS[formation]}
-                drawMode={drawMode}
-                drawingCanvasRef={drawingCanvasRef}
-                onFabricReady={(c) => { fabricCanvasRef.current = c; }}
-                width={CANVAS_W}
-                height={CANVAS_H}
-              />
+              <ResponsiveCanvas width={CANVAS_W} height={CANVAS_H}>
+                <Pitch
+                  formation={FORMATIONS[formation]}
+                  drawMode={drawMode}
+                  drawingCanvasRef={drawingCanvasRef}
+                  onFabricReady={(c) => { fabricCanvasRef.current = c; }}
+                  width={CANVAS_W}
+                  height={CANVAS_H}
+                />
+              </ResponsiveCanvas>
             </div>
           </div>
         </div>

@@ -65,7 +65,7 @@ export default function DashboardPage() {
             <HoverCard key={stat.label}>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-[10px] md:text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <CardTitle className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
                     {stat.label}
                   </CardTitle>
                   <div className={`p-1.5 rounded-lg ${stat.accent}`}>

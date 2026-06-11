@@ -198,8 +198,8 @@ function MatchDetailContent() {
               <CardHeader><CardTitle className="text-sm">实时记录</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 {/* 计时器 */}
-                <div className="flex items-center justify-center gap-4">
-                  <div className="text-5xl font-black tabular-nums w-40 text-center">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <div className="text-3xl sm:text-5xl font-black tabular-nums w-28 sm:w-40 text-center">
                     {timer.displayTime}
                   </div>
                   <div className="flex gap-2">
@@ -213,11 +213,11 @@ function MatchDetailContent() {
                 </div>
 
                 {/* 比分输入 */}
-                <div className="flex items-center justify-center gap-4">
+                <div className="flex items-center justify-center gap-3">
                   <Label className="text-xs">主</Label>
-                  <Input type="number" value={homeScore} onChange={(e) => setHomeScore(parseInt(e.target.value) || 0)} className="w-16 text-center" min={0} />
+                  <Input type="number" value={homeScore} onChange={(e) => setHomeScore(parseInt(e.target.value) || 0)} className="w-16 sm:w-20 text-center" min={0} />
                   <span className="text-lg font-bold">-</span>
-                  <Input type="number" value={awayScore} onChange={(e) => setAwayScore(parseInt(e.target.value) || 0)} className="w-16 text-center" min={0} />
+                  <Input type="number" value={awayScore} onChange={(e) => setAwayScore(parseInt(e.target.value) || 0)} className="w-16 sm:w-20 text-center" min={0} />
                   <Label className="text-xs">客</Label>
                 </div>
 
@@ -247,7 +247,7 @@ function MatchDetailContent() {
                           <button
                             key={p.id}
                             onClick={() => setSelectedPlayer(p.id)}
-                            className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                            className={`px-2.5 py-1.5 text-xs rounded-full border transition-colors ${
                               selectedPlayer === p.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                             }`}
                           >
@@ -265,7 +265,7 @@ function MatchDetailContent() {
                             <button
                               key={p.id}
                               onClick={() => setRelatedPlayer(relatedPlayer === p.id ? "" : p.id)}
-                              className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                              className={`px-2.5 py-1.5 text-xs rounded-full border transition-colors ${
                                 relatedPlayer === p.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                               }`}
                             >
@@ -284,7 +284,7 @@ function MatchDetailContent() {
                             <button
                               key={p.id}
                               onClick={() => setRelatedPlayer(relatedPlayer === p.id ? "" : p.id)}
-                              className={`px-2.5 py-1 text-xs rounded-full border transition-colors ${
+                              className={`px-2.5 py-1.5 text-xs rounded-full border transition-colors ${
                                 relatedPlayer === p.id ? "bg-primary text-primary-foreground" : "hover:bg-accent"
                               }`}
                             >
