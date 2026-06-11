@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useCompetitions, generateMultiRoundRobinSchedule, initStandings } from "@/hooks/use-competitions";
 import { useTeams } from "@/hooks/use-teams";
 import { ArrowLeft, Trophy, Swords, Users, Handshake, X } from "lucide-react";
@@ -67,7 +67,6 @@ export default function NewCompetitionPage() {
   const [format, setFormat] = useState<"knockout" | "group_knockout">("knockout");
   const [rounds, setRounds] = useState(1);
   const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
-  const [autoGenerate, setAutoGenerate] = useState(true);
   const [defaultDate, setDefaultDate] = useState("");
   const [defaultTime, setDefaultTime] = useState("14:00");
   const [defaultVenue, setDefaultVenue] = useState("");
@@ -131,18 +130,14 @@ export default function NewCompetitionPage() {
       const dateTime = defaultDate ? `${defaultDate}T${defaultTime || "14:00"}` : "";
 
       if (type === "friendly") {
-        if (autoGenerate) {
-          const mid = await createMatch({ home: teamNames[0], away: teamNames[1], type, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
-          matchIds.push(mid);
-        }
+        const mid = await createMatch({ home: teamNames[0], away: teamNames[1], type, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
+        matchIds.push(mid);
         await addCompetition({ name: name.trim(), type, format: "round_robin", teams: teamNames, matchIds, currentRound: 1 });
       } else if (type === "league") {
-        if (autoGenerate) {
-          const schedule = generateMultiRoundRobinSchedule(teamNames, rounds);
-          for (const m of schedule) {
-            const mid = await createMatch({ home: m.home, away: m.away, type, round: m.round, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
-            matchIds.push(mid);
-          }
+        const schedule = generateMultiRoundRobinSchedule(teamNames, rounds);
+        for (const m of schedule) {
+          const mid = await createMatch({ home: m.home, away: m.away, type, round: m.round, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
+          matchIds.push(mid);
         }
         compStandings = initStandings(teamNames);
         await addCompetition({ name: name.trim(), type, format: "round_robin", teams: teamNames, matchIds, standings: compStandings, currentRound: 1, rounds });
@@ -157,33 +152,29 @@ export default function NewCompetitionPage() {
           }
           compGroups = groups;
 
-          if (autoGenerate) {
-            // 小组内循环
-            for (const group of groups) {
-              const schedule = generateMultiRoundRobinSchedule(group.teams, 1);
-              for (const m of schedule) {
-                const mid = await createMatch({ home: m.home, away: m.away, type: "cup", date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
-                matchIds.push(mid);
-              }
+          // 小组内循环
+          for (const group of groups) {
+            const schedule = generateMultiRoundRobinSchedule(group.teams, 1);
+            for (const m of schedule) {
+              const mid = await createMatch({ home: m.home, away: m.away, type: "cup", date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
+              matchIds.push(mid);
             }
           }
           await addCompetition({ name: name.trim(), type, format, teams: teamNames, matchIds, groups: compGroups, currentRound: 1 });
         } else {
           // 淘汰赛：使用用户配置的对阵
-          if (autoGenerate) {
-            if (bracket.length > 0) {
-              // 用户配置了对阵
-              for (const [homeIdx, awayIdx] of bracket) {
-                const mid = await createMatch({ home: teamNames[homeIdx], away: teamNames[awayIdx], type: "cup", round: 1, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
+          if (bracket.length > 0) {
+            // 用户配置了对阵
+            for (const [homeIdx, awayIdx] of bracket) {
+              const mid = await createMatch({ home: teamNames[homeIdx], away: teamNames[awayIdx], type: "cup", round: 1, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
+              matchIds.push(mid);
+            }
+          } else {
+            // 自动生成：按顺序配对
+            for (let i = 0; i < teamNames.length; i += 2) {
+              if (i + 1 < teamNames.length) {
+                const mid = await createMatch({ home: teamNames[i], away: teamNames[i + 1], type: "cup", round: 1, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
                 matchIds.push(mid);
-              }
-            } else {
-              // 自动生成：按顺序配对
-              for (let i = 0; i < teamNames.length; i += 2) {
-                if (i + 1 < teamNames.length) {
-                  const mid = await createMatch({ home: teamNames[i], away: teamNames[i + 1], type: "cup", round: 1, date: dateTime, venue: defaultVenue, selectedTeams: selTeamsData });
-                  matchIds.push(mid);
-                }
               }
             }
           }
@@ -193,7 +184,7 @@ export default function NewCompetitionPage() {
 
       // 回填 competitionId
       const compId = matchIds.length > 0 ? (await matchesApi.get(matchIds[0]))?.competitionId : undefined;
-      toast.success(`赛事已创建${autoGenerate ? `，共 ${matchIds.length} 场比赛` : ""}`);
+      toast.success(`赛事已创建，共 ${matchIds.length} 场比赛`);
       router.push("/competitions/");
     } catch {
       toast.error("创建失败");
@@ -328,19 +319,19 @@ export default function NewCompetitionPage() {
             </CardHeader>
             <CardContent className="space-y-2">
               {bracket.length === 0 ? (
-                <p className="text-xs text-muted-foreground">点击「自动生成」或选择队伍后自动配对</p>
+                <p className="text-xs text-muted-foreground">点击「自动生成」配置对阵</p>
               ) : (
                 bracket.map(([homeIdx, awayIdx], i) => (
                   <div key={i} className="flex items-center gap-2 p-2 rounded border text-sm">
                     <span className="text-xs text-muted-foreground w-6">{i + 1}</span>
                     <Select value={String(homeIdx)} onValueChange={(v) => { const next = [...bracket]; next[i] = [Number(v), next[i][1]]; setBracket(next); }}>
                       <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>{teamNames.map((t, idx) => <SelectItem key={idx} value={String(idx)}>{t}</SelectItem>)}</SelectContent>
+                      <SelectContent>{selectedTeams.map((t, idx) => <SelectItem key={t.id} value={String(idx)}>{t.shortName ?? t.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <span className="text-xs text-muted-foreground">vs</span>
                     <Select value={String(awayIdx)} onValueChange={(v) => { const next = [...bracket]; next[i] = [next[i][0], Number(v)]; setBracket(next); }}>
                       <SelectTrigger className="flex-1"><SelectValue /></SelectTrigger>
-                      <SelectContent>{teamNames.map((t, idx) => <SelectItem key={idx} value={String(idx)}>{t}</SelectItem>)}</SelectContent>
+                      <SelectContent>{selectedTeams.map((t, idx) => <SelectItem key={t.id} value={String(idx)}>{t.shortName ?? t.name}</SelectItem>)}</SelectContent>
                     </Select>
                     <Button variant="ghost" size="sm" className="px-1" onClick={() => setBracket(bracket.filter((_, j) => j !== i))}><X className="h-3 w-3" /></Button>
                   </div>
@@ -349,7 +340,7 @@ export default function NewCompetitionPage() {
               {bracket.length < Math.floor(selectedTeams.length / 2) && (
                 <Button variant="outline" size="sm" onClick={() => {
                   const used = new Set(bracket.flat());
-                  const avail = teamNames.map((_, i) => i).filter((i) => !used.has(i));
+                  const avail = selectedTeams.map((_, i) => i).filter((i) => !used.has(i));
                   if (avail.length >= 2) setBracket([...bracket, [avail[0], avail[1]]]);
                 }}><Swords className="h-3 w-3 mr-1" />添加对阵</Button>
               )}
@@ -370,11 +361,11 @@ export default function NewCompetitionPage() {
               {selectedTeams.map((team, i) => (
                 <div key={team.id} className="flex items-center gap-2 text-sm">
                   <span className="flex-1 truncate">{team.shortName ?? team.name}</span>
-                  <Select value={String(groupAssignments[i] ?? 0)} onValueChange={(v) => { const next = [...groupAssignments]; next[i] = Number(v); setGroupAssignments(next); }}>
+                  <Select value={String.fromCharCode(65 + (groupAssignments[i] ?? 0))} onValueChange={(v) => { if (!v) return; const next = [...groupAssignments]; next[i] = v.charCodeAt(0) - 65; setGroupAssignments(next); }}>
                     <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       {Array.from({ length: groupCount }, (_, g) => (
-                        <SelectItem key={g} value={String(g)}>{String.fromCharCode(65 + g)}组</SelectItem>
+                        <SelectItem key={g} value={String.fromCharCode(65 + g)}>{String.fromCharCode(65 + g)}组</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
@@ -384,29 +375,18 @@ export default function NewCompetitionPage() {
           </Card>
         )}
 
-        {/* 自动生成选项 */}
-        <div className="flex items-center gap-3 p-3 rounded-lg border">
-          <Checkbox checked={autoGenerate} onCheckedChange={(v) => setAutoGenerate(v === true)} />
-          <div>
-            <Label className="text-sm cursor-pointer">自动生成赛程</Label>
-            <p className="text-xs text-muted-foreground">取消勾选可稍后手动添加比赛</p>
-          </div>
-        </div>
-
         {/* 默认日期/场地 */}
-        {autoGenerate && (
-          <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm">默认比赛信息（可选）</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2"><Label>日期</Label><Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} /></div>
-                <div className="space-y-2"><Label>时间</Label><Input type="time" value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} /></div>
-                <div className="space-y-2"><Label>场地</Label><Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder="例如：西操场" /></div>
-              </div>
-              <p className="text-xs text-muted-foreground">可在赛事详情页逐场修改</p>
-            </CardContent>
-          </Card>
-        )}
+        <Card>
+          <CardHeader className="pb-3"><CardTitle className="text-sm">默认比赛信息（可选）</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2"><Label>日期</Label><Input type="date" value={defaultDate} onChange={(e) => setDefaultDate(e.target.value)} /></div>
+              <div className="space-y-2"><Label>时间</Label><Input type="time" value={defaultTime} onChange={(e) => setDefaultTime(e.target.value)} /></div>
+              <div className="space-y-2"><Label>场地</Label><Input value={defaultVenue} onChange={(e) => setDefaultVenue(e.target.value)} placeholder="例如：西操场" /></div>
+            </div>
+            <p className="text-xs text-muted-foreground">可在赛事详情页逐场修改</p>
+          </CardContent>
+        </Card>
 
         {/* 预览 */}
         {canSubmit && (
@@ -421,7 +401,7 @@ export default function NewCompetitionPage() {
         )}
 
         <Button onClick={handleSubmit} disabled={!canSubmit || loading} className="w-full" size="lg">
-          {loading ? "创建中..." : `创建赛事${canSubmit && autoGenerate ? ` (${schedulePreview.total} 场)` : ""}`}
+          {loading ? "创建中..." : `创建赛事${canSubmit ? ` (${schedulePreview.total} 场)` : ""}`}
         </Button>
       </div>
     </PageTransition>
