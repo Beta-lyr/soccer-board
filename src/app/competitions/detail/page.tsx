@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { useCompetitions, updateStanding, initStandings } from "@/hooks/use-competitions";
 import { useMatches } from "@/hooks/use-matches";
 import { useTeams } from "@/hooks/use-teams";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Trash2, Trophy, Swords, Plus, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -43,6 +44,7 @@ function CompetitionDetailContent() {
   const router = useRouter();
   const id = searchParams.get("id");
   const { competitions, updateCompetition, deleteCompetition } = useCompetitions();
+  const { confirm, ConfirmDialog } = useConfirm();
   const { matches, updateMatch, deleteMatch } = useMatches();
   useTeams();
 
@@ -136,7 +138,7 @@ function CompetitionDetailContent() {
 
   // 删除比赛
   const handleDeleteMatch = async (matchId: string) => {
-    if (!comp || !confirm("确认删除此比赛？")) return;
+    if (!comp || !(await confirm({ description: "确认删除此比赛？", variant: "destructive" }))) return;
     await deleteMatch(matchId);
     await updateCompetition(comp.id, { matchIds: comp.matchIds.filter((id) => id !== matchId) });
     toast.success("比赛已删除");
@@ -200,7 +202,7 @@ function CompetitionDetailContent() {
   }
 
   const handleDelete = async () => {
-    if (confirm(`确认删除赛事「${comp.name}」？关联的比赛不会被删除。`)) {
+    if (await confirm({ description: `确认删除赛事「${comp.name}」？关联的比赛不会被删除。`, variant: "destructive" })) {
       await deleteCompetition(comp.id);
       toast.success("赛事已删除");
       router.push("/competitions/");
@@ -331,6 +333,7 @@ function CompetitionDetailContent() {
         </motion.div>
       </div>
 
+      {ConfirmDialog}
       {/* 补录比分弹窗 */}
       <Dialog open={scoreDialogOpen} onOpenChange={setScoreDialogOpen}>
         <DialogContent>

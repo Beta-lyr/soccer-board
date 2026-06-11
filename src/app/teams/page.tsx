@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTeams } from "@/hooks/use-teams";
 import { usePlayers } from "@/hooks/use-players";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Plus, Trash2, Users } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -14,9 +15,10 @@ import { toast } from "sonner";
 export default function TeamsPage() {
   const { teams, deleteTeam } = useTeams();
   const { players } = usePlayers();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`确认删除队伍「${name}」？`)) {
+    if (await confirm({ description: `确认删除队伍「${name}」？`, variant: "destructive" })) {
       await deleteTeam(id);
       toast.success("队伍已删除");
     }
@@ -105,6 +107,7 @@ export default function TeamsPage() {
           </div>
         )}
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useI18n } from "@/lib/i18n";
 import { useTrainings } from "@/hooks/use-trainings";
 import { usePlayers } from "@/hooks/use-players";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import type { TrainingTheme } from "@/types";
 import { Plus, Trash2, Users } from "lucide-react";
 import { motion } from "framer-motion";
@@ -31,6 +32,7 @@ export default function TrainingPage() {
   const { t } = useI18n();
   const { trainings, addTraining, updateTraining, deleteTraining } = useTrainings();
   const { players } = usePlayers();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [showForm, setShowForm] = useState(false);
   const [showAttendance, setShowAttendance] = useState<string | null>(null);
 
@@ -57,7 +59,7 @@ export default function TrainingPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (confirm("确认删除此训练？")) {
+    if (await confirm({ description: "确认删除此训练？", variant: "destructive" })) {
       await deleteTraining(id);
     }
   };
@@ -180,6 +182,7 @@ export default function TrainingPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

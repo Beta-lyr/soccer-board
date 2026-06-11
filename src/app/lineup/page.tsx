@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { useLineupTemplates } from "@/hooks/use-lineup";
 import { useI18n } from "@/lib/i18n";
 import { FORMATIONS, FORMATION_GROUPS } from "@/types";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Plus, Users, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -18,7 +19,6 @@ function guessPlayerCount(formation: string): number | null {
   for (const [countStr, group] of Object.entries(FORMATION_GROUPS)) {
     if (formation in group) return Number(countStr);
   }
-  // 尝试从自定义阵型推断
   const positions = FORMATIONS[formation];
   return positions?.length ?? null;
 }
@@ -26,9 +26,11 @@ function guessPlayerCount(formation: string): number | null {
 export default function LineupListPage() {
   const { t } = useI18n();
   const { templates, deleteTemplate } = useLineupTemplates();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`确认删除阵容「${name}」？`)) {
+    const ok = await confirm({ description: `确认删除阵容「${name}」？`, variant: "destructive" });
+    if (ok) {
       await deleteTemplate(id);
       toast.success("阵容已删除");
     }
@@ -113,6 +115,7 @@ export default function LineupListPage() {
           </div>
         )}
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

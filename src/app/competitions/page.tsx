@@ -6,20 +6,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useCompetitions } from "@/hooks/use-competitions";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Plus, Trophy, Swords, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { toast } from "sonner";
 
-const TYPE_LABELS: Record<string, string> = { league: "联赛", cup: "杯赛" };
-const TYPE_ICONS: Record<string, typeof Trophy> = { league: Trophy, cup: Swords };
-const TYPE_COLORS: Record<string, string> = { league: "bg-amber-500/15 text-amber-600", cup: "bg-violet-500/15 text-violet-600" };
+const TYPE_LABELS: Record<string, string> = { league: "联赛", cup: "杯赛", friendly: "友谊赛" };
+const TYPE_ICONS: Record<string, typeof Trophy> = { league: Trophy, cup: Swords, friendly: Trophy };
+const TYPE_COLORS: Record<string, string> = { league: "bg-amber-500/15 text-amber-600", cup: "bg-violet-500/15 text-violet-600", friendly: "bg-emerald-500/15 text-emerald-600" };
 
 export default function CompetitionsPage() {
   const { competitions, deleteCompetition } = useCompetitions();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const handleDelete = async (id: string, name: string) => {
-    if (confirm(`确认删除赛事「${name}」？`)) {
+    const ok = await confirm({ description: `确认删除赛事「${name}」？`, variant: "destructive" });
+    if (ok) {
       await deleteCompetition(id);
       toast.success("赛事已删除");
     }
@@ -92,6 +95,7 @@ export default function CompetitionsPage() {
           </div>
         )}
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

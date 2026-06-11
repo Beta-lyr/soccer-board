@@ -15,6 +15,7 @@ import { createApiClient } from "@/lib/api";
 import type { Player } from "@/types";
 
 const playersApi = createApiClient<Player>("players");
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -31,6 +32,7 @@ function PlayerDetailContent() {
   const [showEdit, setShowEdit] = useState(false);
   const [showZoom, setShowZoom] = useState(false);
   const { t } = useI18n();
+  const { confirm, ConfirmDialog } = useConfirm();
 
   useEffect(() => {
     if (id) playersApi.get(id).then((p) => p && setPlayer(p));
@@ -60,7 +62,7 @@ function PlayerDetailContent() {
   const avgScore = (Object.values(player.abilities).reduce((a, b) => a + b, 0) / 6).toFixed(1);
 
   const handleDelete = async () => {
-    if (confirm(t("players.confirmDelete", { name: player.name }))) {
+    if (await confirm({ description: t("players.confirmDelete", { name: player.name }), variant: "destructive" })) {
       await playersApi.remove(id);
       router.push("/players/");
     }
@@ -166,6 +168,7 @@ function PlayerDetailContent() {
           />
         </DialogContent>
       </Dialog>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

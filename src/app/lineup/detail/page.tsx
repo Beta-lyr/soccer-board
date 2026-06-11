@@ -11,6 +11,7 @@ import { PitchSvg } from "@/components/tactics/pitch-svg";
 import { useLineupTemplates } from "@/hooks/use-lineup";
 import { usePlayers } from "@/hooks/use-players";
 import { FORMATION_GROUPS } from "@/types";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
@@ -34,6 +35,7 @@ function LineupDetailContent() {
   const { players } = usePlayers();
 
   const template = templates.find((t) => t.id === id);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   if (!template) {
     return (
@@ -52,7 +54,7 @@ function LineupDetailContent() {
   const playerCount = guessPlayerCount(template.formation);
 
   const handleDelete = async () => {
-    if (confirm(`确认删除阵容「${template.name}」？`)) {
+    if (await confirm({ description: `确认删除阵容「${template.name}」？`, variant: "destructive" })) {
       await deleteTemplate(template.id);
       toast.success("阵容已删除");
       router.push("/lineup/");
@@ -145,6 +147,7 @@ function LineupDetailContent() {
           </div>
         </div>
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }

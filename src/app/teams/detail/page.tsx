@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useTeams } from "@/hooks/use-teams";
 import { usePlayers } from "@/hooks/use-players";
+import { useConfirm } from "@/components/ui/confirm-dialog";
 import { ArrowLeft, Trash2, Save, Camera, X, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ function TeamDetailContent() {
   const { players } = usePlayers();
 
   const team = teams.find((t) => t.id === id);
+  const { confirm, ConfirmDialog } = useConfirm();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(team?.name ?? "");
@@ -111,7 +113,7 @@ function TeamDetailContent() {
 
   const handleDelete = async () => {
     if (!id) return;
-    if (confirm(`确认删除队伍「${team?.name}」？`)) {
+    if (await confirm({ description: `确认删除队伍「${team?.name}」？`, variant: "destructive" })) {
       await deleteTeam(id);
       toast.success("队伍已删除");
       router.push("/teams/");
@@ -255,6 +257,7 @@ function TeamDetailContent() {
           </>
         )}
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }
