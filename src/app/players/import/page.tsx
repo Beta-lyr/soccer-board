@@ -50,12 +50,12 @@ export default function ImportPlayersPage() {
         const name = (row["姓名"] ?? row["name"] ?? "").trim();
         const number = parseInt(row["号码"] ?? row["number"] ?? "0");
         if (!name || !number) {
-          players.push({ name: name || "未知", number: number || 0, preferredFoot: "right", positions: [], status: "healthy", abilities: { speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 }, valid: false, error: "缺少姓名或号码" });
+          players.push({ name: name || "?", number: number || 0, preferredFoot: "right", positions: [], status: "healthy", abilities: { speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 }, valid: false, error: "missingNameOrNumber" });
           continue;
         }
 
         const foot = (row["惯用脚"] ?? row["preferredFoot"] ?? "右").trim();
-        const preferredFoot: PreferredFoot = foot === "左" ? "left" : foot === "双脚" ? "both" : "right";
+        const preferredFoot: PreferredFoot = (foot === "左" || foot === "Left" || foot === "L") ? "left" : (foot === "双脚" || foot === "Both") ? "both" : "right";
 
         const positions = (row["擅长位置"] ?? row["positions"] ?? "").trim().split(/[\s,]+/).filter(Boolean);
 
@@ -81,10 +81,10 @@ export default function ImportPlayersPage() {
         });
       } catch {
         players.push({
-          name: row["姓名"] ?? "解析错误", number: 0,
+          name: row["姓名"] ?? "?", number: 0,
           preferredFoot: "right", positions: [], status: "healthy",
           abilities: { speed: 5, shooting: 5, passing: 5, defending: 5, stamina: 5, awareness: 5 },
-          valid: false, error: "数据格式错误",
+          valid: false, error: "dataFormatError",
         });
       }
     }
@@ -108,10 +108,10 @@ export default function ImportPlayersPage() {
       for (const p of valid) {
         await addPlayer(p);
       }
-      toast.success(`成功导入 ${valid.length} 名球员`);
+      toast.success(t("players.importSuccess", { count: valid.length }));
       router.push("/players/");
     } catch (e) {
-      toast.error("导入失败: " + (e instanceof Error ? e.message : "未知错误"));
+      toast.error(`${t("players.importFailed")}: ${e instanceof Error ? e.message : "?"}`);
     } finally {
       setImporting(false);
     }
@@ -132,20 +132,20 @@ export default function ImportPlayersPage() {
       <div className="flex-1 p-4 md:p-6 space-y-6 max-w-4xl">
         {/* 上传区 */}
         <Card>
-          <CardHeader><CardTitle className="text-sm">上传 CSV 文件</CardTitle></CardHeader>
+          <CardHeader><CardTitle className="text-sm">{t("players.uploadCsv")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
             <div
               className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:border-primary/50 transition-colors"
               onClick={() => fileRef.current?.click()}
             >
               <FileSpreadsheet className="h-10 w-10 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm font-medium">点击选择 CSV 文件</p>
-              <p className="text-xs text-muted-foreground mt-1">支持中文和英文表头</p>
+              <p className="text-sm font-medium">{t("players.clickToSelectCsv")}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t("players.csvSupport")}</p>
             </div>
             <input ref={fileRef} type="file" accept=".csv" onChange={handleFileChange} className="hidden" />
 
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">CSV 格式示例：</span>
+              <span className="text-xs text-muted-foreground">{t("players.csvFormat")}</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -153,11 +153,11 @@ export default function ImportPlayersPage() {
                   const blob = new Blob([CSV_TEMPLATE], { type: "text/csv;charset=utf-8" });
                   const link = document.createElement("a");
                   link.href = URL.createObjectURL(blob);
-                  link.download = "球员导入模板.csv";
+                  link.download = "player-import-template.csv";
                   link.click();
                 }}
               >
-                下载模板
+                {t("players.downloadTemplate")}
               </Button>
             </div>
           </CardContent>
@@ -168,10 +168,10 @@ export default function ImportPlayersPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-sm flex items-center justify-between">
-                <span>预览 ({parsed.length} 条，{validCount} 条有效)</span>
+                <span>{t("players.preview")} ({parsed.length}，{validCount} {t("players.valid")})</span>
                 <Button size="sm" onClick={handleImport} disabled={validCount === 0 || importing}>
                   <Check className="h-4 w-4 mr-1" />
-                  {importing ? "导入中..." : `导入 ${validCount} 名球员`}
+                  {importing ? t("players.importing") : t("players.importCount", { count: validCount })}
                 </Button>
               </CardTitle>
             </CardHeader>
@@ -180,17 +180,17 @@ export default function ImportPlayersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>状态</TableHead>
-                      <TableHead>号码</TableHead>
-                      <TableHead>姓名</TableHead>
-                      <TableHead>位置</TableHead>
-                      <TableHead>惯用脚</TableHead>
-                      <TableHead>速度</TableHead>
-                      <TableHead>射门</TableHead>
-                      <TableHead>传球</TableHead>
-                      <TableHead>防守</TableHead>
-                      <TableHead>体能</TableHead>
-                      <TableHead>意识</TableHead>
+                      <TableHead>{t("common.status")}</TableHead>
+                      <TableHead>{t("players.number")}</TableHead>
+                      <TableHead>{t("players.name")}</TableHead>
+                      <TableHead>{t("players.position")}</TableHead>
+                      <TableHead>{t("players.preferredFoot")}</TableHead>
+                      <TableHead>{t("players.speed")}</TableHead>
+                      <TableHead>{t("players.shooting")}</TableHead>
+                      <TableHead>{t("players.passing")}</TableHead>
+                      <TableHead>{t("players.defending")}</TableHead>
+                      <TableHead>{t("players.stamina")}</TableHead>
+                      <TableHead>{t("players.awareness")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -200,13 +200,14 @@ export default function ImportPlayersPage() {
                         <TableCell>{p.number}</TableCell>
                         <TableCell className="font-medium">{p.name}</TableCell>
                         <TableCell>{p.positions.join(", ")}</TableCell>
-                        <TableCell>{p.preferredFoot === "left" ? "左" : p.preferredFoot === "both" ? "双" : "右"}</TableCell>
+                        <TableCell>{p.preferredFoot === "left" ? t("players.footLeft") : p.preferredFoot === "both" ? t("players.footBoth") : t("players.footRight")}</TableCell>
                         <TableCell>{p.abilities.speed}</TableCell>
                         <TableCell>{p.abilities.shooting}</TableCell>
                         <TableCell>{p.abilities.passing}</TableCell>
                         <TableCell>{p.abilities.defending}</TableCell>
                         <TableCell>{p.abilities.stamina}</TableCell>
                         <TableCell>{p.abilities.awareness}</TableCell>
+                        {p.error && <TableCell className="text-destructive text-xs">{t(`players.${p.error}`)}</TableCell>}
                       </TableRow>
                     ))}
                   </TableBody>
