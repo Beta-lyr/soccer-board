@@ -15,6 +15,7 @@ import { useCompetitions, updateStanding, initStandings } from "@/hooks/use-comp
 import { useMatches } from "@/hooks/use-matches";
 import { useTeams } from "@/hooks/use-teams";
 import { useConfirm } from "@/components/ui/confirm-dialog";
+import { Bracket } from "@/components/competitions/bracket";
 import { ArrowLeft, Trash2, Trophy, Swords, Plus, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -262,6 +263,22 @@ function CompetitionDetailContent() {
                     </tbody>
                   </table>
                 </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* 杯赛对阵图 */}
+        {comp.type === "cup" && compMatches.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Swords className="h-4 w-4" />对阵图
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Bracket matches={compMatches} />
               </CardContent>
             </Card>
           </motion.div>
