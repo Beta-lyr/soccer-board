@@ -96,7 +96,7 @@ export default function CalendarPage() {
                       {d.day}
                     </div>
                     <div className="space-y-0.5">
-                      {d.events.map((evt, i) => (
+                      {d.events.slice(0, 3).map((evt, i) => (
                         <Link key={i} href={evt.href}>
                           <div className={`text-[10px] px-1 py-0.5 rounded truncate ${
                             evt.type === "match" ? "bg-red-500/15 text-red-600" : "bg-blue-500/15 text-blue-600"
@@ -105,6 +105,9 @@ export default function CalendarPage() {
                           </div>
                         </Link>
                       ))}
+                      {d.events.length > 3 && (
+                        <div className="text-[10px] text-muted-foreground px-1">+{d.events.length - 3} 更多</div>
+                      )}
                     </div>
                   </motion.div>
                 );

@@ -115,9 +115,27 @@ function MatchDetailContent() {
     }
   };
 
+  // 从进球事件自动计算比分
+  const calcScoreFromEvents = () => {
+    let home = 0, away = 0;
+    const goalEvents = match.events.filter((e) => e.type === "goal");
+    for (const evt of goalEvents) {
+      // 判断进球球员属于主队还是客队
+      const isHomePlayer = match.homeLineup?.some((l) => l.playerId === evt.playerId);
+      const isAwayPlayer = match.awayLineup?.some((l) => l.playerId === evt.playerId);
+      if (isHomePlayer) home++;
+      else if (isAwayPlayer) away++;
+      else home++; // 默认算主队
+    }
+    return { home, away };
+  };
+
   const handleFinish = async () => {
     try {
-      await updateMatch(id, { status: "finished", score: { home: homeScore, away: awayScore } });
+      // 如果有进球事件，优先使用自动计算的比分
+      const goalEvents = match.events.filter((e) => e.type === "goal");
+      const score = goalEvents.length > 0 ? calcScoreFromEvents() : { home: homeScore, away: awayScore };
+      await updateMatch(id, { status: "finished", score });
       timer.reset();
       toast.success("比赛已结束");
     } catch {

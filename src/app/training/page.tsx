@@ -73,6 +73,34 @@ export default function TrainingPage() {
     await updateTraining(trainingId, { attendance: updated });
   };
 
+  // 添加新球员到已有训练的考勤中
+  const addMissingPlayers = async (trainingId: string) => {
+    const training = trainings.find((t) => t.id === trainingId);
+    if (!training) return;
+    const existingIds = new Set(training.attendance.map((a) => a.playerId));
+    const missingPlayers = players.filter((p) => !existingIds.has(p.id));
+    if (missingPlayers.length === 0) {
+      toast.info("没有新球员需要添加");
+      return;
+    }
+    const updated = [
+      ...training.attendance,
+      ...missingPlayers.map((p) => ({ playerId: p.id, present: true })),
+    ];
+    await updateTraining(trainingId, { attendance: updated });
+    toast.success(`已添加 ${missingPlayers.length} 名新球员`);
+  };
+
+  // 计算球员出勤率
+  const getAttendanceRate = (playerId: string) => {
+    const total = trainings.length;
+    if (total === 0) return 0;
+    const present = trainings.filter((tr) =>
+      tr.attendance.some((a) => a.playerId === playerId && a.present)
+    ).length;
+    return Math.round((present / total) * 100);
+  };
+
   const currentTraining = showAttendance ? trainings.find((tr) => tr.id === showAttendance) : null;
 
   return (
@@ -125,6 +153,14 @@ export default function TrainingPage() {
                       {/* 出勤列表 */}
                       {showAttendance === tr.id && (
                         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 pt-3 border-t">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-xs text-muted-foreground">
+                              考勤人数: {tr.attendance.length} | 出勤率: {tr.attendance.length > 0 ? Math.round((presentCount / tr.attendance.length) * 100) : 0}%
+                            </span>
+                            <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => addMissingPlayers(tr.id)}>
+                              <Plus className="h-3 w-3 mr-1" />添加新球员
+                            </Button>
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                             {tr.attendance.map((a) => {
                               const player = players.find((p) => p.id === a.playerId);

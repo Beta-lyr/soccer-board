@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/app-shell";
 import { I18nProvider } from "@/lib/i18n";
+import { LangUpdater } from "@/components/layout/lang-updater";
 import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
@@ -33,6 +34,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex">
         <I18nProvider>
+          <LangUpdater />
           <AppShell>{children}</AppShell>
           <Toaster richColors position="top-center" />
         </I18nProvider>

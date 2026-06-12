@@ -35,6 +35,27 @@ class LocalDB extends Dexie {
 const localDb = new LocalDB();
 let useLocal = false; // 运行时检测，API 不可用时切换
 
+// ── 离线状态订阅 ──
+type OfflineListener = (offline: boolean) => void;
+const offlineListeners = new Set<OfflineListener>();
+
+export function onOfflineChange(listener: OfflineListener): () => void {
+  offlineListeners.add(listener);
+  listener(useLocal); // 立即同步当前状态
+  return () => offlineListeners.delete(listener);
+}
+
+function setOffline(value: boolean) {
+  if (useLocal !== value) {
+    useLocal = value;
+    offlineListeners.forEach((fn) => fn(value));
+  }
+}
+
+export function isOffline(): boolean {
+  return useLocal;
+}
+
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
@@ -51,7 +72,7 @@ async function ensureMode() {
     await request("/api/players?limit=1");
   } catch {
     console.warn("[soccer-board] API 不可用，回退到本地 IndexedDB");
-    useLocal = true;
+    setOffline(true);
   }
 }
 

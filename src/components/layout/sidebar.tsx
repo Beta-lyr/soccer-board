@@ -99,6 +99,7 @@ export function Sidebar() {
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-sidebar-foreground/60 hover:text-sidebar-foreground"
+            aria-label={mobileOpen ? "关闭菜单" : "打开菜单"}
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -158,6 +159,7 @@ export function Sidebar() {
               onClick={logout}
               className="p-1.5 text-sidebar-foreground/40 hover:text-sidebar-foreground/80 transition-colors"
               title="退出登录"
+              aria-label="退出登录"
             >
               <LogOut className="h-4 w-4" />
             </button>

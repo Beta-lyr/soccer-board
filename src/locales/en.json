@@ -284,6 +284,7 @@
     "yellowCards": "YC",
     "redCards": "RC",
     "rating": "Rating",
+    "cleanSheets": "CS",
     "goalsUnit": " goals"
   },
   "training": {

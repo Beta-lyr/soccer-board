@@ -2,6 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
+import { OfflineBanner } from "./offline-banner";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -15,6 +16,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     <>
       {showSidebar && <Sidebar />}
       <main className={showSidebar ? "md:ml-56 pt-12 md:pt-0 flex-1 flex flex-col min-h-screen" : "flex-1 flex flex-col min-h-screen"}>
+        <OfflineBanner />
         {children}
       </main>
     </>

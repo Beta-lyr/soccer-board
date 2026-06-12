@@ -35,7 +35,18 @@ function calcPlayerStats(players: Player[], matches: Match[]) {
         rated.length > 0
           ? (rated.reduce((s, m) => s + (m.ratings.find((r) => r.playerId === p.id)?.score ?? 0), 0) / rated.length).toFixed(1)
           : "-";
-      return { ...p, appearances, goals, assists, yellowCards, redCards, avgRating };
+      // 零封统计（仅门将位置）
+      const isGoalkeeper = p.positions.some((pos) => ["GK", "门将"].includes(pos));
+      const cleanSheets = isGoalkeeper
+        ? finished.filter((m) => {
+            const isInLineup = m.homeLineup?.some((l) => l.playerId === p.id) || m.lineup?.some((l) => l.playerId === p.id);
+            if (!isInLineup) return false;
+            const isHome = m.homeLineup?.some((l) => l.playerId === p.id) ?? true;
+            const goalsAgainst = isHome ? (m.score?.away ?? 0) : (m.score?.home ?? 0);
+            return goalsAgainst === 0;
+          }).length
+        : undefined;
+      return { ...p, appearances, goals, assists, yellowCards, redCards, avgRating, cleanSheets };
     })
     .filter((p) => p.appearances > 0)
     .sort((a, b) => b.goals - a.goals);
@@ -72,6 +83,8 @@ function calcTeamStats(matches: Match[]) {
     .sort((a, b) => b.points - a.points || b.goalDiff - a.goalDiff);
 }
 
+type SortKey = "goals" | "assists" | "appearances" | "avgRating" | "yellowCards" | "redCards";
+
 export default function StatsPage() {
   const { t } = useI18n();
   const { players } = usePlayers();
@@ -79,6 +92,17 @@ export default function StatsPage() {
   const { competitions } = useCompetitions();
 
   const [filterId, setFilterId] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<SortKey>("goals");
+  const [sortDir, setSortDir] = useState<"desc" | "asc">("desc");
+
+  const handleSort = (key: SortKey) => {
+    if (sortBy === key) {
+      setSortDir(sortDir === "desc" ? "asc" : "desc");
+    } else {
+      setSortBy(key);
+      setSortDir("desc");
+    }
+  };
 
   // 根据筛选条件过滤比赛
   const matches = useMemo(() => {
@@ -87,7 +111,16 @@ export default function StatsPage() {
     return allMatches.filter((m) => m.competitionId === filterId);
   }, [allMatches, filterId]);
 
-  const playerStats = useMemo(() => calcPlayerStats(players, matches), [players, matches]);
+  const playerStats = useMemo(() => {
+    const stats = calcPlayerStats(players, matches);
+    return [...stats].sort((a, b) => {
+      const va = a[sortBy];
+      const vb = b[sortBy];
+      const numA = typeof va === "number" ? va : va === "-" ? -1 : parseFloat(va as string);
+      const numB = typeof vb === "number" ? vb : vb === "-" ? -1 : parseFloat(vb as string);
+      return sortDir === "desc" ? numB - numA : numA - numB;
+    });
+  }, [players, matches, sortBy, sortDir]);
   const teamStats = useMemo(() => calcTeamStats(matches), [matches]);
   const finishedMatches = matches.filter((m) => m.status === "finished");
   const wins = finishedMatches.filter((m) => (m.score?.home ?? 0) > (m.score?.away ?? 0)).length;
@@ -148,12 +181,13 @@ export default function StatsPage() {
                           <TableRow>
                             <TableHead className="w-8">{t("stats.rank")}</TableHead>
                             <TableHead>{t("stats.player")}</TableHead>
-                            <TableHead className="text-center">{t("stats.appearances")}</TableHead>
-                            <TableHead className="text-center">{t("stats.goals")}</TableHead>
-                            <TableHead className="text-center">{t("stats.assists")}</TableHead>
-                            <TableHead className="text-center">{t("stats.yellowCards")}</TableHead>
-                            <TableHead className="text-center">{t("stats.redCards")}</TableHead>
-                            <TableHead className="text-center">{t("stats.rating")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("appearances")}>{t("stats.appearances")}{sortBy === "appearances" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("goals")}>{t("stats.goals")}{sortBy === "goals" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("assists")}>{t("stats.assists")}{sortBy === "assists" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("yellowCards")}>{t("stats.yellowCards")}{sortBy === "yellowCards" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("redCards")}>{t("stats.redCards")}{sortBy === "redCards" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center cursor-pointer hover:text-foreground" onClick={() => handleSort("avgRating")}>{t("stats.rating")}{sortBy === "avgRating" && (sortDir === "desc" ? " ↓" : " ↑")}</TableHead>
+                            <TableHead className="text-center">{t("stats.cleanSheets")}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -174,6 +208,7 @@ export default function StatsPage() {
                               <TableCell className="text-center">{p.yellowCards}</TableCell>
                               <TableCell className="text-center">{p.redCards}</TableCell>
                               <TableCell className="text-center font-bold text-primary">{p.avgRating}</TableCell>
+                              <TableCell className="text-center">{p.cleanSheets ?? "-"}</TableCell>
                             </TableRow>
                           ))}
                         </TableBody>
