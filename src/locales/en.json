@@ -18,6 +18,8 @@
     "search": "Search",
     "confirm": "Confirm",
     "loading": "Loading...",
+    "loadFailed": "Load failed",
+    "notFound": "Not found",
     "noData": "No data",
     "export": "Export",
     "import": "Import",
@@ -94,6 +96,11 @@
     "confirmDelete": "Delete player \"{name}\"?",
     "playerDetail": "Player Detail",
     "notSpecified": "No player specified",
+    "notFound": "Player not found",
+    "deleted": "Player deleted",
+    "updated": "Player updated",
+    "deleteFailed": "Delete failed",
+    "updateFailed": "Update failed",
     "avatar": "Avatar",
     "clickToUploadAvatar": "Click to upload avatar",
     "uploadingAvatar": "Uploading...",
@@ -115,7 +122,15 @@
     "dataFormatError": "Data format error",
     "footLeft": "L",
     "footRight": "R",
-    "footBoth": "Both"
+    "footBoth": "Both",
+    "compare": "Player Compare",
+    "selectToCompare": "Select players to compare",
+    "addPlayer": "Add player",
+    "noAvailable": "No players available",
+    "abilityComparison": "Ability Comparison",
+    "dataComparison": "Data Comparison",
+    "ability": "Ability",
+    "selectAtLeast2": "Select at least 2 players to compare"
   },
   "tactics": {
     "title": "Tactics",
@@ -215,7 +230,14 @@
     "enterOpponentName": "Please enter opponent name",
     "selectHomeTeam": "Please select home team",
     "selectAwayTeam": "Please select away team",
-    "sameTeamError": "Home and away teams cannot be the same"
+    "sameTeamError": "Home and away teams cannot be the same",
+    "replay": "Match Replay",
+    "noEventsToReplay": "No events to replay",
+    "eventCount": "{count} events",
+    "pressPlayToStart": "Press play to start replay",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart"
   },
   "stats": {
     "title": "Stats",

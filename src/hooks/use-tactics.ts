@@ -8,7 +8,7 @@ import type { Tactic } from "@/types";
 const api = createApiClient<Tactic>("tactics");
 
 export function useTactics() {
-  const tactics = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
+  const { data: tactics = [], isLoading, error } = useApiQuery(() => api.list({ orderBy: "createdAt" }), []);
 
   const addTactic = useCallback(async (data: Omit<Tactic, "id" | "createdAt" | "updatedAt">) => {
     return api.add(data);
@@ -22,9 +22,10 @@ export function useTactics() {
     await api.remove(id);
   }, []);
 
-  return { tactics, addTactic, updateTactic, deleteTactic };
+  return { tactics, isLoading, error, addTactic, updateTactic, deleteTactic };
 }
 
 export function useTactic(id: string) {
-  return useApiQuery(() => api.get(id), [id]);
+  const { data: tactic, isLoading, error } = useApiQuery(() => api.get(id), [id]);
+  return { tactic, isLoading, error };
 }

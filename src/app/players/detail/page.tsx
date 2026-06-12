@@ -1,7 +1,6 @@
 "use client";
 
-import { Suspense } from "react";
-import { useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -11,15 +10,15 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/players/status-badge";
 import { AbilityRadar } from "@/components/players/ability-radar";
 import { PlayerForm } from "@/components/players/player-form";
-import { createApiClient } from "@/lib/api";
+import { usePlayer, usePlayers } from "@/hooks/use-players";
 import type { Player } from "@/types";
 
-const playersApi = createApiClient<Player>("players");
 import { useConfirm } from "@/components/ui/confirm-dialog";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Loader2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
+import { toast } from "sonner";
 
 const FOOT_KEYS: Record<string, string> = { left: "players.leftFoot", right: "players.rightFoot", both: "players.bothFeet" };
 const ABILITY_KEYS: Record<string, string> = { speed: "players.speed", shooting: "players.shooting", passing: "players.passing", defending: "players.defending", stamina: "players.stamina", awareness: "players.awareness" };
@@ -28,15 +27,12 @@ function PlayerDetailContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const id = searchParams.get("id");
-  const [player, setPlayer] = useState<Player | null>(null);
-  const [showEdit, setShowEdit] = useState(false);
-  const [showZoom, setShowZoom] = useState(false);
   const { t } = useI18n();
   const { confirm, ConfirmDialog } = useConfirm();
-
-  useEffect(() => {
-    if (id) playersApi.get(id).then((p) => p && setPlayer(p));
-  }, [id]);
+  const { player, isLoading, error } = usePlayer(id || "");
+  const { updatePlayer, deletePlayer } = usePlayers();
+  const [showEdit, setShowEdit] = useState(false);
+  const [showZoom, setShowZoom] = useState(false);
 
   if (!id) {
     return (
@@ -50,11 +46,25 @@ function PlayerDetailContent() {
     );
   }
 
-  if (!player) {
+  if (isLoading) {
     return (
       <PageTransition>
         <Header title={t("players.playerDetail")} />
-        <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground"><p>{t("common.loading")}</p></div>
+        <div className="flex-1 p-4 md:p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageTransition>
+    );
+  }
+
+  if (error || !player) {
+    return (
+      <PageTransition>
+        <Header title={t("players.playerDetail")} />
+        <div className="flex-1 p-4 md:p-6 text-center text-muted-foreground">
+          <p>{error ? t("common.loadFailed") : t("players.notFound")}</p>
+          <Link href="/players/" className="text-primary underline mt-2 inline-block">{t("common.back")}</Link>
+        </div>
       </PageTransition>
     );
   }
@@ -63,16 +73,24 @@ function PlayerDetailContent() {
 
   const handleDelete = async () => {
     if (await confirm({ description: t("players.confirmDelete", { name: player.name }), variant: "destructive" })) {
-      await playersApi.remove(id);
-      router.push("/players/");
+      try {
+        await deletePlayer(id);
+        toast.success(t("players.deleted"));
+        router.push("/players/");
+      } catch {
+        toast.error(t("players.deleteFailed"));
+      }
     }
   };
 
   const handleUpdate = async (data: Omit<Player, "id" | "createdAt" | "updatedAt">) => {
-    await playersApi.update(id, data);
-    const updated = await playersApi.get(id);
-    if (updated) setPlayer(updated);
-    setShowEdit(false);
+    try {
+      await updatePlayer(id, data);
+      toast.success(t("players.updated"));
+      setShowEdit(false);
+    } catch {
+      toast.error(t("players.updateFailed"));
+    }
   };
 
   return (
@@ -175,7 +193,7 @@ function PlayerDetailContent() {
 
 export default function PlayerDetailPage() {
   return (
-    <Suspense fallback={<div className="flex-1 p-6 text-center text-muted-foreground">Loading...</div>}>
+    <Suspense fallback={<div className="flex-1 p-6 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
       <PlayerDetailContent />
     </Suspense>
   );

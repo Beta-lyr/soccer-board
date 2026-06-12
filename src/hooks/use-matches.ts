@@ -8,7 +8,7 @@ import type { Match, MatchEvent, MatchRating, MatchStatus } from "@/types";
 const api = createApiClient<Match>("matches");
 
 export function useMatches() {
-  const matches = useApiQuery(() => api.list({ orderBy: "date" }), []) ?? [];
+  const { data: matches = [], isLoading, error } = useApiQuery(() => api.list({ orderBy: "date" }), []);
 
   const addMatch = useCallback(async (data: Omit<Match, "id" | "createdAt" | "updatedAt" | "events" | "ratings">) => {
     const id = await api.add({ ...data, events: [], ratings: [] } as Omit<Match, "id" | "createdAt" | "updatedAt">);
@@ -44,9 +44,10 @@ export function useMatches() {
     await api.update(matchId, { status: "finished" as MatchStatus, score });
   }, []);
 
-  return { matches, addMatch, updateMatch, deleteMatch, addEvent, removeEvent, updateRatings, finishMatch };
+  return { matches, isLoading, error, addMatch, updateMatch, deleteMatch, addEvent, removeEvent, updateRatings, finishMatch };
 }
 
 export function useMatch(id: string) {
-  return useApiQuery(() => api.get(id), [id]);
+  const { data: match, isLoading, error } = useApiQuery(() => api.get(id), [id]);
+  return { match, isLoading, error };
 }

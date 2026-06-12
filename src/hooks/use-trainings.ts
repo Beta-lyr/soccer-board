@@ -8,7 +8,7 @@ import type { Training } from "@/types";
 const api = createApiClient<Training>("trainings");
 
 export function useTrainings() {
-  const trainings = useApiQuery(() => api.list({ orderBy: "date" }), []) ?? [];
+  const { data: trainings = [], isLoading, error } = useApiQuery(() => api.list({ orderBy: "date" }), []);
 
   const addTraining = useCallback(async (data: Omit<Training, "id" | "createdAt" | "updatedAt">) => {
     return api.add(data);
@@ -22,5 +22,5 @@ export function useTrainings() {
     await api.remove(id);
   }, []);
 
-  return { trainings, addTraining, updateTraining, deleteTraining };
+  return { trainings, isLoading, error, addTraining, updateTraining, deleteTraining };
 }

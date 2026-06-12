@@ -18,6 +18,8 @@
     "search": "搜索",
     "confirm": "确认",
     "loading": "加载中...",
+    "loadFailed": "加载失败",
+    "notFound": "未找到",
     "noData": "暂无数据",
     "export": "导出",
     "import": "导入",
@@ -94,6 +96,11 @@
     "confirmDelete": "确认删除球员「{name}」？",
     "playerDetail": "球员详情",
     "notSpecified": "未指定球员",
+    "notFound": "球员不存在",
+    "deleted": "球员已删除",
+    "updated": "球员信息已更新",
+    "deleteFailed": "删除失败",
+    "updateFailed": "更新失败",
     "avatar": "头像",
     "clickToUploadAvatar": "点击上传头像",
     "uploadingAvatar": "上传中...",
@@ -115,7 +122,15 @@
     "dataFormatError": "数据格式错误",
     "footLeft": "左",
     "footRight": "右",
-    "footBoth": "双"
+    "footBoth": "双",
+    "compare": "球员对比",
+    "selectToCompare": "选择球员对比",
+    "addPlayer": "添加球员",
+    "noAvailable": "没有可选球员",
+    "abilityComparison": "能力对比",
+    "dataComparison": "数据对比",
+    "ability": "能力",
+    "selectAtLeast2": "请至少选择 2 名球员进行对比"
   },
   "tactics": {
     "title": "战术板",
@@ -215,7 +230,14 @@
     "enterOpponentName": "请输入对手名称",
     "selectHomeTeam": "请选择主队",
     "selectAwayTeam": "请选择客队",
-    "sameTeamError": "主客队不能相同"
+    "sameTeamError": "主客队不能相同",
+    "replay": "比赛回放",
+    "noEventsToReplay": "暂无可回放的事件",
+    "eventCount": "共 {count} 个事件",
+    "pressPlayToStart": "点击播放开始回放",
+    "play": "播放",
+    "pause": "暂停",
+    "restart": "重新开始"
   },
   "stats": {
     "title": "数据统计",

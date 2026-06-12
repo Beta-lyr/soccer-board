@@ -8,7 +8,7 @@ import type { LineupTemplate } from "@/types";
 const api = createApiClient<LineupTemplate>("lineupTemplates");
 
 export function useLineupTemplates() {
-  const templates = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
+  const { data: templates = [], isLoading, error } = useApiQuery(() => api.list({ orderBy: "createdAt" }), []);
 
   const addTemplate = useCallback(async (data: Omit<LineupTemplate, "id" | "createdAt" | "updatedAt">) => {
     return api.add(data);
@@ -22,5 +22,5 @@ export function useLineupTemplates() {
     await api.remove(id);
   }, []);
 
-  return { templates, addTemplate, updateTemplate, deleteTemplate };
+  return { templates, isLoading, error, addTemplate, updateTemplate, deleteTemplate };
 }

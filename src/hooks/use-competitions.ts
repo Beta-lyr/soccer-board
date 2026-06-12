@@ -8,7 +8,7 @@ import type { Competition, Standing } from "@/types";
 const api = createApiClient<Competition>("competitions");
 
 export function useCompetitions() {
-  const competitions = useApiQuery(() => api.list({ orderBy: "createdAt" }), []) ?? [];
+  const { data: competitions = [], isLoading, error } = useApiQuery(() => api.list({ orderBy: "createdAt" }), []);
 
   const addCompetition = useCallback(async (data: Omit<Competition, "id" | "createdAt" | "updatedAt">) => {
     return api.add(data);
@@ -29,11 +29,12 @@ export function useCompetitions() {
     await api.update(competitionId, { matchIds });
   }, []);
 
-  return { competitions, addCompetition, updateCompetition, deleteCompetition, addMatchToCompetition };
+  return { competitions, isLoading, error, addCompetition, updateCompetition, deleteCompetition, addMatchToCompetition };
 }
 
 export function useCompetition(id: string) {
-  return useApiQuery(() => api.get(id), [id]);
+  const { data: competition, isLoading, error } = useApiQuery(() => api.get(id), [id]);
+  return { competition, isLoading, error };
 }
 
 // ── 赛程生成工具函数（纯计算，不涉及 API） ──

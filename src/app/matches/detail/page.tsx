@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { PageTransition } from "@/components/layout/page-transition";
@@ -10,15 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/lib/i18n";
-import { createApiClient } from "@/lib/api";
+import { useMatch, useMatches } from "@/hooks/use-matches";
 import { useMatchTimer } from "@/hooks/use-match-timer";
 import { usePlayers } from "@/hooks/use-players";
-import type { Match, MatchEventType, Player } from "@/types";
+import type { MatchEventType } from "@/types";
 
-const matchesApi = createApiClient<Match>("matches");
-import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle } from "lucide-react";
+import { ArrowLeft, Play, Pause, RotateCcw, CheckCircle, Loader2, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { toast } from "sonner";
+import { useConfirm } from "@/components/ui/confirm-dialog";
+import { useRouter } from "next/navigation";
+import { MatchReplay } from "@/components/matches/match-replay";
 
 const EVENT_TYPES: { type: MatchEventType; icon: string; label: string; color: string }[] = [
   { type: "goal", icon: "⚽", label: "进球", color: "bg-green-500/15 text-green-600" },
@@ -29,10 +32,13 @@ const EVENT_TYPES: { type: MatchEventType; icon: string; label: string; color: s
 
 function MatchDetailContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const id = searchParams.get("id");
   const { t } = useI18n();
-  const [match, setMatch] = useState<Match | null>(null);
+  const { match, isLoading, error } = useMatch(id || "");
+  const { updateMatch, deleteMatch, addEvent, removeEvent } = useMatches();
   const { players } = usePlayers();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [selectedType, setSelectedType] = useState<MatchEventType | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<string>("");
   const [relatedPlayer, setRelatedPlayer] = useState<string>("");
@@ -42,17 +48,37 @@ function MatchDetailContent() {
 
   const timer = useMatchTimer(id || "");
 
-  useEffect(() => {
-    if (id) {
-      matchesApi.get(id).then((m) => m && setMatch(m));
-    }
-  }, [id]);
-
-  if (!id || !match) {
+  if (!id) {
     return (
       <PageTransition>
         <Header title="比赛详情" />
-        <div className="flex-1 p-6 text-center text-muted-foreground"><p>{t("common.loading")}</p></div>
+        <div className="flex-1 p-6 text-center text-muted-foreground">
+          <p>未指定比赛</p>
+          <Link href="/matches/" className="text-primary underline mt-2 inline-block">{t("common.back")}</Link>
+        </div>
+      </PageTransition>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <PageTransition>
+        <Header title="比赛详情" />
+        <div className="flex-1 p-6 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </PageTransition>
+    );
+  }
+
+  if (error || !match) {
+    return (
+      <PageTransition>
+        <Header title="比赛详情" />
+        <div className="flex-1 p-6 text-center text-muted-foreground">
+          <p>{error ? "加载失败" : "比赛不存在"}</p>
+          <Link href="/matches/" className="text-primary underline mt-2 inline-block">{t("common.back")}</Link>
+        </div>
       </PageTransition>
     );
   }
@@ -61,30 +87,63 @@ function MatchDetailContent() {
 
   const handleAddEvent = async () => {
     if (!selectedType || !selectedPlayer) return;
-    const newEvent = {
-      id: crypto.randomUUID(),
-      matchId: id,
-      type: selectedType,
-      minute: timer.minute,
-      playerId: selectedPlayer,
-      relatedPlayerId: relatedPlayer || undefined,
-      note: note || undefined,
-      timestamp: new Date().toISOString(),
-    };
-    await matchesApi.update(id, { events: [...match.events, newEvent] });
-    const updated = await matchesApi.get(id);
-    if (updated) setMatch(updated);
-    setSelectedType(null);
-    setSelectedPlayer("");
-    setRelatedPlayer("");
-    setNote("");
+    try {
+      await addEvent(id, {
+        matchId: id,
+        type: selectedType,
+        minute: timer.minute,
+        playerId: selectedPlayer,
+        relatedPlayerId: relatedPlayer || undefined,
+        note: note || undefined,
+      });
+      setSelectedType(null);
+      setSelectedPlayer("");
+      setRelatedPlayer("");
+      setNote("");
+      toast.success("事件已记录");
+    } catch {
+      toast.error("记录失败");
+    }
+  };
+
+  const handleRemoveEvent = async (eventId: string) => {
+    try {
+      await removeEvent(id, eventId);
+      toast.success("事件已删除");
+    } catch {
+      toast.error("删除失败");
+    }
   };
 
   const handleFinish = async () => {
-    await matchesApi.update(id, { status: "finished", score: { home: homeScore, away: awayScore } });
-    const updated = await matchesApi.get(id);
-    if (updated) setMatch(updated);
-    timer.reset();
+    try {
+      await updateMatch(id, { status: "finished", score: { home: homeScore, away: awayScore } });
+      timer.reset();
+      toast.success("比赛已结束");
+    } catch {
+      toast.error("操作失败");
+    }
+  };
+
+  const handleStartMatch = async () => {
+    try {
+      await updateMatch(id, { status: "live" });
+      toast.success("比赛开始");
+    } catch {
+      toast.error("操作失败");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (await confirm({ description: "确认删除此比赛？", variant: "destructive" })) {
+      try {
+        await deleteMatch(id);
+        toast.success("比赛已删除");
+        router.push("/matches/");
+      } catch {
+        toast.error("删除失败");
+      }
+    }
   };
 
   const getPlayerName = (pid: string) => players.find((p) => p.id === pid)?.name ?? "未知";
@@ -111,17 +170,14 @@ function MatchDetailContent() {
             {!isFinished && (
               <Button
                 size="sm"
-                onClick={async () => {
-                  if (match.status === "upcoming") {
-                    await matchesApi.update(id, { status: "live" });
-                    const updated = await matchesApi.get(id);
-                    if (updated) setMatch(updated);
-                  }
-                }}
+                onClick={isLive ? undefined : handleStartMatch}
               >
                 {isLive ? "比赛中" : "开始比赛"}
               </Button>
             )}
+            <Button variant="destructive" size="sm" onClick={handleDelete}>
+              <Trash2 className="h-4 w-4 mr-1" />删除
+            </Button>
           </div>
         }
       />
@@ -318,6 +374,13 @@ function MatchDetailContent() {
           </motion.div>
         )}
 
+        {/* 比赛回放 */}
+        {match.events.length > 0 && (
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+            <MatchReplay match={match} players={players} />
+          </motion.div>
+        )}
+
         {/* 事件时间线 */}
         <Card>
           <CardHeader><CardTitle className="text-sm">比赛事件 ({match.events.length})</CardTitle></CardHeader>
@@ -343,6 +406,16 @@ function MatchDetailContent() {
                         {event.note && <p className="text-xs text-muted-foreground">{event.note}</p>}
                       </div>
                       <span className="text-xs font-mono text-muted-foreground">{event.minute}&apos;</span>
+                      {isLive && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => handleRemoveEvent(event.id)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   );
                 })}
@@ -373,9 +446,11 @@ function MatchDetailContent() {
                           if (isNaN(score) || score < 1 || score > 10) return;
                           const newRatings = match.ratings.filter((r) => r.playerId !== p.id);
                           newRatings.push({ playerId: p.id, score });
-                          await matchesApi.update(id, { ratings: newRatings });
-                          const updated = await matchesApi.get(id);
-                          if (updated) setMatch(updated);
+                          try {
+                            await updateMatch(id, { ratings: newRatings });
+                          } catch {
+                            toast.error("评分保存失败");
+                          }
                         }}
                         placeholder="-"
                         className="w-16 text-center text-sm"
@@ -388,13 +463,14 @@ function MatchDetailContent() {
           </Card>
         )}
       </div>
+      {ConfirmDialog}
     </PageTransition>
   );
 }
 
 export default function MatchDetailPage() {
   return (
-    <Suspense fallback={<div className="flex-1 p-6 text-center text-muted-foreground">Loading...</div>}>
+    <Suspense fallback={<div className="flex-1 p-6 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>}>
       <MatchDetailContent />
     </Suspense>
   );

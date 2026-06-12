@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { StatusBadge } from "@/components/players/status-badge";
 import { PlayerForm } from "@/components/players/player-form";
 import { usePlayers } from "@/hooks/use-players";
-import { Plus, Upload, Search } from "lucide-react";
+import { Plus, Upload, Search, GitCompareArrows } from "lucide-react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useI18n } from "@/lib/i18n";
@@ -35,6 +35,12 @@ export default function PlayersPage() {
         description={t("players.count", { count: players.length })}
         actions={
           <div className="flex gap-2">
+            <Link href="/players/compare/">
+              <Button variant="outline" size="sm">
+                <GitCompareArrows className="h-4 w-4 mr-1" />
+                <span className="hidden sm:inline">{t("players.compare")}</span>
+              </Button>
+            </Link>
             <Link href="/players/import/">
               <Button variant="outline" size="sm">
                 <Upload className="h-4 w-4 mr-1" />
