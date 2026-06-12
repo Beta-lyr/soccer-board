@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Pitch } from "@/components/tactics/pitch";
+import { Pitch, type PlayerPosition } from "@/components/tactics/pitch";
 import { FormationPicker } from "@/components/tactics/formation-picker";
 import { DrawingTools } from "@/components/tactics/drawing-tools";
 import { ResponsiveCanvas } from "@/components/ui/responsive-canvas";
@@ -58,6 +58,7 @@ function EditTacticContent() {
   const [formation, setFormation] = useState("4-4-2");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savedPositions, setSavedPositions] = useState<PlayerPosition[] | undefined>();
   const fabricCanvasRef = useRef<fabric.Canvas | null>(null);
   const svgContainerRef = useRef<HTMLDivElement>(null);
   const drawingsLoadedRef = useRef(false);
@@ -83,6 +84,14 @@ function EditTacticContent() {
         // 兼容旧数据：如果是新格式 Drawing[] 则加载，否则忽略
         if (isDrawingArray(tactic.drawings)) {
           loadDrawings(tactic.drawings as Drawing[]);
+        }
+        // 恢复球员位置（百分比坐标转换为像素坐标）
+        if (tactic.players && tactic.players.length > 0) {
+          setSavedPositions(tactic.players.map((p) => ({
+            x: (p.x / 100) * CANVAS_W,
+            y: (p.y / 100) * CANVAS_H,
+            label: p.label,
+          })));
         }
       }
       setLoading(false);
@@ -129,9 +138,24 @@ function EditTacticContent() {
           multiplier: 0.5,
         });
       }
+
+      // 从 Fabric canvas 获取球员位置（转换为百分比坐标）
+      const players: { playerId: string; x: number; y: number; label?: string }[] = [];
+      canvas.getObjects().forEach((obj, i) => {
+        if ((obj as fabric.FabricObject).get("data")?.type === "player") {
+          const data = (obj as fabric.FabricObject).get("data");
+          players.push({
+            playerId: data?.playerId || `player-${i}`,
+            x: ((obj.left || 0) / CANVAS_W) * 100,
+            y: ((obj.top || 0) / CANVAS_H) * 100,
+            label: data?.position || `${i + 1}`,
+          });
+        }
+      });
+
       await tacticsApi.update(id, {
         name, type: tacticType, formation,
-        drawings, thumbnail,
+        drawings, players, thumbnail,
         updatedAt: new Date().toISOString(),
       });
       toast.success(t("tactics.saved"));
@@ -194,6 +218,7 @@ function EditTacticContent() {
                   drawMode={drawMode}
                   drawingCanvasRef={drawingCanvasRef}
                   onFabricReady={(c) => { fabricCanvasRef.current = c; }}
+                  savedPositions={savedPositions}
                   width={CANVAS_W}
                   height={CANVAS_H}
                 />

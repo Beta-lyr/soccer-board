@@ -8,6 +8,12 @@ import type { DrawMode } from "./drawing-tools";
 
 const PLAYER_RADIUS = 20;
 
+export interface PlayerPosition {
+  x: number;
+  y: number;
+  label?: string;
+}
+
 interface PitchProps {
   formation: FormationPosition[];
   drawMode: DrawMode;
@@ -15,6 +21,8 @@ interface PitchProps {
   drawingCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   /** Fabric canvas 就绪回调（用于保存时获取球员位置） */
   onFabricReady?: (fabricCanvas: fabric.Canvas) => void;
+  /** 保存时的球员位置（用于恢复） */
+  savedPositions?: PlayerPosition[];
   width?: number;
   height?: number;
 }
@@ -24,6 +32,7 @@ export function Pitch({
   drawMode,
   drawingCanvasRef,
   onFabricReady,
+  savedPositions,
   width = 600,
   height = 750,
 }: PitchProps) {
@@ -31,6 +40,7 @@ export function Pitch({
   const fabricCanvasElRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const readyRef = useRef(false);
+  const initialLoadDoneRef = useRef(false);
 
   // 初始化 Fabric canvas（仅球员层）
   useEffect(() => {
@@ -54,7 +64,13 @@ export function Pitch({
       wrapperDiv.style.zIndex = "10";
     }
 
-    addPlayerMarkers(canvas, formation);
+    // 优先使用保存的位置，否则使用阵型默认位置
+    const positions = savedPositions && savedPositions.length > 0
+      ? savedPositions
+      : formation.map((pos) => ({ x: (pos.x / 100) * width, y: (pos.y / 100) * height, label: pos.position }));
+    addPlayerMarkersFromPositions(canvas, positions);
+    initialLoadDoneRef.current = true;
+
     fabricRef.current = canvas;
     readyRef.current = true;
     onFabricReady?.(canvas);
@@ -63,12 +79,15 @@ export function Pitch({
       canvas.dispose();
       fabricRef.current = null;
       readyRef.current = false;
+      initialLoadDoneRef.current = false;
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 阵型变化时更新球员标记
+  // 阵型变化时更新球员标记（仅在没有保存位置且初始加载完成后）
   useEffect(() => {
-    if (!readyRef.current || !fabricRef.current) return;
+    if (!readyRef.current || !fabricRef.current || !initialLoadDoneRef.current) return;
+    // 如果有保存的位置，不根据阵型重置
+    if (savedPositions && savedPositions.length > 0) return;
     const canvas = fabricRef.current;
     canvas.getObjects().forEach((obj) => {
       if ((obj as fabric.FabricObject).get("data")?.type === "player") {
@@ -77,7 +96,7 @@ export function Pitch({
     });
     addPlayerMarkers(canvas, formation);
     canvas.renderAll();
-  }, [formation, width, height]);
+  }, [formation, width, height, savedPositions]);
 
   // 模式切换：控制 Fabric 球员可交互性
   useEffect(() => {
@@ -133,38 +152,47 @@ function addPlayerMarkers(canvas: fabric.Canvas, positions: FormationPosition[])
   positions.forEach((pos, i) => {
     const x = (pos.x / 100) * w;
     const y = (pos.y / 100) * h;
-
-    const circle = new fabric.Circle({
-      radius: PLAYER_RADIUS,
-      fill: "rgba(255,255,255,0.95)",
-      stroke: "rgba(0,0,0,0.4)",
-      strokeWidth: 2,
-      originX: "center",
-      originY: "center",
-      shadow: new fabric.Shadow({ color: "rgba(0,0,0,0.3)", blur: 5, offsetY: 2 }),
-    });
-
-    const text = new fabric.Text(pos.position, {
-      fontSize: 12,
-      fontWeight: "bold",
-      fill: "#1a1a1a",
-      originX: "center",
-      originY: "center",
-      fontFamily: "sans-serif",
-      selectable: false,
-      evented: false,
-    });
-
-    const group = new fabric.Group([circle, text], {
-      left: x,
-      top: y,
-      originX: "center",
-      originY: "center",
-      hasControls: false,
-      hasBorders: false,
-    });
-
-    group.set("data", { type: "player", index: i, position: pos.position });
-    canvas.add(group);
+    addSingleMarker(canvas, x, y, pos.position, i);
   });
+}
+
+function addPlayerMarkersFromPositions(canvas: fabric.Canvas, positions: PlayerPosition[]) {
+  positions.forEach((pos, i) => {
+    addSingleMarker(canvas, pos.x, pos.y, pos.label || `${i + 1}`, i);
+  });
+}
+
+function addSingleMarker(canvas: fabric.Canvas, x: number, y: number, label: string, index: number) {
+  const circle = new fabric.Circle({
+    radius: PLAYER_RADIUS,
+    fill: "rgba(255,255,255,0.95)",
+    stroke: "rgba(0,0,0,0.4)",
+    strokeWidth: 2,
+    originX: "center",
+    originY: "center",
+    shadow: new fabric.Shadow({ color: "rgba(0,0,0,0.3)", blur: 5, offsetY: 2 }),
+  });
+
+  const text = new fabric.Text(label, {
+    fontSize: 12,
+    fontWeight: "bold",
+    fill: "#1a1a1a",
+    originX: "center",
+    originY: "center",
+    fontFamily: "sans-serif",
+    selectable: false,
+    evented: false,
+  });
+
+  const group = new fabric.Group([circle, text], {
+    left: x,
+    top: y,
+    originX: "center",
+    originY: "center",
+    hasControls: false,
+    hasBorders: false,
+  });
+
+  group.set("data", { type: "player", index, position: label });
+  canvas.add(group);
 }
