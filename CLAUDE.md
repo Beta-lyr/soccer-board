@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-大学足球队管理系统（soccer-board）——前端 SPA + Cloudflare Pages Functions，部署在 Cloudflare Pages。业务数据存储在浏览器 IndexedDB 中，文件存储使用 Cloudflare R2。
+大学足球队管理系统（soccer-board）——Next.js SPA + Cloudflare Pages Functions，部署在 Cloudflare Pages。主数据库为 Cloudflare D1（SQLite），支持离线时自动降级到本地 IndexedDB，文件存储使用 Cloudflare R2。
 
 ## 常用命令
 
@@ -21,7 +21,9 @@ npm run lint     # ESLint 检查
 - **Next.js 16** App Router + 静态导出 (`output: "export"`)，纯 SPA
 - **React 19** + TypeScript 5（strict 模式）
 - **Tailwind CSS 4** — 无 `tailwind.config.ts`，通过 `globals.css` CSS 变量配置主题（oklch 色彩系统）
-- **Dexie.js** (IndexedDB ORM) + `useLiveQuery` 为唯一数据层，5 张表：players, tactics, lineupTemplates, matches, trainings
+- **Cloudflare Pages Functions** — 边缘部署的服务端 REST API
+- **Cloudflare D1** — 主数据库（SQLite），通过 `_helpers.ts` 泛型 CRUD 处理器访问
+- **Dexie.js** — IndexedDB ORM，作为 API 不可用时的离线降级方案
 - **shadcn/ui** (base-nova 风格) + lucide-react 图标
 - **Fabric.js 7** 用于战术板球员标记拖拽
 - **Recharts** 用于球员能力雷达图和数据统计图表
@@ -30,14 +32,14 @@ npm run lint     # ESLint 检查
 
 ## 代码架构
 
-### 目录结构约定
+### 目录结构
 
 ```
 src/
   app/           # 页面路由（App Router）
   components/    # 按功能域分目录（players/, tactics/, ui/）
   hooks/         # 自定义 hooks，每个域一个（use-players.ts, use-matches.ts 等）
-  lib/           # 工具库、数据库定义、渲染逻辑
+  lib/           # 工具库、API 客户端、渲染逻辑
   locales/       # i18n 翻译文件
   types/         # TypeScript 类型定义（集中在一个 index.ts）
 functions/       # Cloudflare Pages Functions（服务端，不在 Next.js 构建中）
@@ -45,23 +47,39 @@ functions/       # Cloudflare Pages Functions（服务端，不在 Next.js 构�
 
 路径别名：`@/*` → `./src/*`
 
+### 数据流架构
+
+采用双模式 API 客户端（`src/lib/api.ts`）：
+- `createApiClient<T>(table)` 返回 `{ list, get, add, update, remove }`
+- **生产环境**：调用 Cloudflare Pages Functions REST API（D1 数据库）
+- **离线降级**：自动检测 API 不可用时，回退到本地 Dexie（IndexedDB）数据库
+- 每次写操作后调用 `emitRefresh()`（`src/lib/refresh-bus.ts` 发布/订阅总线）触发 hooks 重新拉取
+- 30 秒轮询作为兜底刷新机制
+
+每个业务域有专用 hook（如 `use-players.ts`）封装 CRUD，使用 `useApiQuery` 替代旧版 `useLiveQuery`。
+
 ### Cloudflare Pages Functions
 
-`functions/` 目录包含服务端逻辑，由 Cloudflare Pages 自动部署，与 Next.js 静态站点独立构建。R2 Bucket 和 Secrets 通过 Cloudflare Dashboard 配置（非代码）。
+`functions/` 目录包含服务端逻辑，由 Cloudflare Pages 自动部署，与 Next.js 静态站点独立构建。
 
-- `functions/api/avatar/upload.ts` — 头像上传到 R2（POST，multipart/form-data）
-- `functions/api/avatar/serve.ts` — 头像图片读取（GET，?key=avatars/xxx）
+**认证系统**：
+- `functions/_middleware.ts` — 边缘中间件，拦截所有请求验证 HMAC session cookie
+- `functions/api/auth/login.ts` — POST，验证密码后签发 7 天 HMAC-SHA256 token
+- `functions/api/auth/logout.ts` — POST，清除 session cookie
+- 白名单路径：`/`, `/login`, `/api/auth`, `/api/avatar`, 静态资源
+
+**通用 CRUD**（`functions/api/_helpers.ts`）：
+- `createCrudHandler(table, indexedColumns)` 生成标准 REST 端点
+- JSON 字段自动序列化/反序列化（如 players 的 positions、abilities）
+- 所有资源端点（players/, matches/, tactics/ 等）都是它的薄封装
+
+**文件存储**：
+- `functions/api/avatar/upload.ts` — 头像上传到 R2（base64 JSON，max 2MB）
+- `functions/api/avatar/serve.ts` — 头像读取（GET，?key=）
+
+**Cloudflare 绑定**：D1 (`env.DB`), R2 (`env.AVATAR_BUCKET`), Secrets (`AUTH_PASSWORD`, `SESSION_SECRET`)。通过 Cloudflare Dashboard 配置，不可写入代码。
 
 tsconfig.json 已排除 `functions/` 目录，避免 Next.js TypeScript 检查报错。
-
-### 数据流模式
-
-所有持久化数据通过 Dexie.js 存入 IndexedDB。每个业务域有专用 hook（如 `use-players.ts`）封装 CRUD：
-- **读取**：`useLiveQuery()` 实现响应式查询，数据变更自动触发重渲染
-- **写入**：async 函数直接操作 Dexie 表
-- **ID 生成**：`crypto.randomUUID()`
-
-组件本地状态用 `useState`，战术画板中用 `useRef` 避免事件处理器中的闭包陈旧问题。
 
 ### 战术画板 3 层架构
 
@@ -75,22 +93,31 @@ tsconfig.json 已排除 `functions/` 目录，避免 Next.js TypeScript 检查�
 
 导出功能（`lib/export-composite.ts`）将 3 层合并为 PNG。
 
-绘制工具 4 种类型定义在 `lib/drawing-types.ts`：run（白色虚线）、pass（黄色箭头）、dribble（蓝色线）、defend（红色半透明矩形）。
+绘制工具 4 种类型定义在 `lib/drawing-types.ts`：run（白色虚线）、pass（黄色箭头）、dribble（蓝色线）、defend（红色半透明矩形）。支持完整撤销/重做历史。
+
+球员位置保存为百分比坐标（0-100），加载时转换为像素坐标。`pitch.tsx` 支持 `savedPositions` prop 恢复上次位置。
 
 ### 阵型系统
 
-8 种预设阵型定义在 `types/index.ts` 的 `FORMATIONS` 常量中，坐标为百分比（0-100）。自定义阵型通过文本输入存储在 `localStorage`。
+阵型按人数分组定义在 `types/index.ts` 的 `FORMATION_GROUPS` 中：
+- 5人制：2-1-1, 1-2-1
+- 7人制：2-3-1, 3-2-1, 2-2-2
+- 8人制：3-3-1, 3-2-2, 4-2-1, 2-3-2
+- 9人制：3-3-2, 4-3-1, 3-4-1
+- 11人制：4-4-2, 4-3-3, 3-5-2, 4-2-3-1, 4-5-1, 3-4-3, 5-3-2, 4-1-4-1
+
+`FORMATIONS` 是扁平化的合并映射。自定义阵型通过 `formation-picker.tsx` 的文本输入存储到 `localStorage`（key: `customFormations`），运行时动态注册。
 
 ### 国际化
 
-自定义实现于 `lib/i18n.tsx`，翻译文件在 `locales/zh.json` 和 `locales/en.json`。使用 `useI18n()` hook 获取 `t()` 函数。
+自定义实现于 `lib/i18n.tsx`，翻译文件在 `locales/zh.json` 和 `locales/en.json`。使用 `useI18n()` hook 获取 `t()` 函数，支持 `{param}` 插值和点路径 key。
 
 ## 重要注意事项
 
 - **无 SSR**：Next.js 页面均为客户端渲染，静态导出后无服务器参与
-- **服务端逻辑在 `functions/`**：需要服务端的功能（如文件上传）使用 Cloudflare Pages Functions，不要在 `src/` 中添加 API routes
+- **服务端逻辑在 `functions/`**：需要服务端的功能使用 Cloudflare Pages Functions，不要在 `src/` 中添加 API routes
 - **R2 token 安全**：R2 绑定和 API Keys 通过 Cloudflare Dashboard 的 Secrets 配置，绝不可写入代码或环境变量
-- **zustand 已安装但未使用**：不要引入 zustand，数据层统一用 Dexie
+- **zustand 已安装但未使用**：不要引入 zustand
 - **next-intl 已安装但未使用**：i18n 使用自定义实现，不要引入 next-intl 的 API
 - **shadcn/ui 组件**在 `components/ui/` 下，使用 `components.json` 中的配置管理
 - **ESLint 使用 flat config**（`eslint.config.mjs`），非传统 `.eslintrc` 格式
